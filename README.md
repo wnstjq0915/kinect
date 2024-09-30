@@ -255,3 +255,386 @@ public partial class MainWindow : Window
     }
 }
 ```
+
+## 4. 거리
+### 결과물
+- 뎁스스트림을 이용하여 모든 요소의 거리를 측정한 뒤에 각각의 거리를 조건문을 통하여 색을 다르게 표현
+
+```
+ex)
+3500 거리 이상: 흰색
+3000 거리 이상: 빨간색
+2500 거리 이상: 초록색
+등
+```
+
+- 각각의 플레이어 인식
+```c#
+int player = depthFrame[i16] & DepthImageFrame.PlayerIndexBitmask;
+```
+- 각각의 거리 인식
+```c#
+int nDistance = depthFrame[i16] >> DepthImageFrame.PlayerIndexBitmaskWidth;
+```
+```c#
+public partial class MainWindow : Window
+{
+    public MainWindow()
+    {
+        InitializeComponent();
+        InitializeNui();
+    }
+
+    KinectSensor nui = null;
+
+    void InitializeNui()
+    {
+        nui = KinectSensor.KinectSensors[0];
+        nui.DepthStream.Enable(DepthImageFormat.Resolution320x240Fps30);
+        nui.DepthFrameReady += new
+            EventHandler<DepthImageFrameReadyEventArgs>(nui_DepthFrameReady);
+        // nui.SkeletonStream.Enable(); // 사용자를 인식해야 하는 코드가 아니므로 생략 가능
+        nui.Start();
+    }
+
+    void nui_DepthFrameReady(object sender, DepthImageFrameReadyEventArgs e)
+    {
+        DepthImageFrame ImageParam = e.OpenDepthImageFrame();
+
+        if (ImageParam == null) return;
+
+        short[] ImageBits = new short[ImageParam.PixelDataLength];
+        ImageParam.CopyPixelDataTo(ImageBits);
+        WriteableBitmap wb = new WriteableBitmap(ImageParam.Width,
+                                                ImageParam.Height,
+                                                96, 96,
+                                                PixelFormats.Bgr32,
+                                                null);
+        wb.WritePixels(new Int32Rect(0, 0, ImageParam.Width, ImageParam.Height),
+                    GetRGB(ImageParam,
+                        ImageBits,
+                        nui.DepthStream),
+                    ImageParam.Width * 4,
+                    0);
+        image1.Source = wb;
+    }
+
+    byte[] GetRGB(DepthImageFrame PImage, short[] depthFrame, DepthImageStream depthStream)
+    {
+        byte[] rgbs = new byte[PImage.Width * PImage.Height * 4];
+
+        for (int i16 = 0, i32 = 0; i16 < depthFrame.Length && i32 < rgbs.Length; i16++,
+            i32 += 4)
+        {
+            // 각 거리 계산
+            int nDistance = depthFrame[i16] >> DepthImageFrame.PlayerIndexBitmaskWidth;
+            // 깊이 데이터를 플레이어 정보 비트마스크로 오른쪽으로 시프트(비트연산)하여
+            // 플레이어 인덱스를 무시하고, 순수 깊이 값만 추출
+            SetRGB(rgbs, i32, 0x00, 0x00, 0x00);
+
+            if (nDistance > 3500) SetRGB(rgbs, i32, 0xFF, 0xFF, 0xFF);
+            else if (nDistance > 3000) SetRGB(rgbs, i32, 0xFF, 0x00, 0x00);
+            else if (nDistance > 2500) SetRGB(rgbs, i32, 0x00, 0xFF, 0x00);
+            else if (nDistance > 2000) SetRGB(rgbs, i32, 0x00, 0x00, 0xFF);
+            else if (nDistance > 1500) SetRGB(rgbs, i32, 0xFF, 0xFF, 0x00);
+            else if (nDistance > 1000) SetRGB(rgbs, i32, 0x00, 0xFF, 0xFF);
+            else if (nDistance > 800) SetRGB(rgbs, i32, 0xFF, 0x00, 0xFF);
+            else if (nDistance > 0) SetRGB(rgbs, i32, 0x7F, 0x00, 0x00);
+        }
+
+        return rgbs;
+    }
+
+    void SetRGB(byte[] nPlayers, int nPos, byte r, byte g, byte b)
+    {
+        nPlayers[nPos + 2] = r;
+        nPlayers[nPos + 1] = g;
+        nPlayers[nPos + 0] = b;
+    }
+}
+```
+
+## 5. 사용자저장
+### 결과물
+- 솔루션3을 이용하여 각 유저의 색을 다르게 출력하고 사용자 각각 화면에 얼마나 출력되는지를 픽셀 수로 출력
+
+- 저장 버튼을 누를 경우 각각의 유저의 픽셀만이 담긴 사진을 생성하여 저장하고 사진 열기
+
+### 동작
+- {0, 0, 0}의 플레이어1~3의 픽셀 수가 저장되는 배열을 생성한다.
+- 픽셀을 순회하며 플레이어가 인식되면 배열[player-1 인덱스]의 값을 1 더하여 최종적으로 각 플레이어의 픽셀 수를 텍스트블록에 출력한다.
+
+```c#
+public partial class MainWindow : Window
+{
+    public MainWindow()
+    {
+        InitializeComponent();
+        InitializeNui();
+    }
+
+    KinectSensor nui = null;
+    void InitializeNui()
+    {
+        nui = KinectSensor.KinectSensors[0];
+        nui.DepthStream.Enable(DepthImageFormat.Resolution320x240Fps30);
+        nui.DepthFrameReady += new
+            EventHandler<DepthImageFrameReadyEventArgs>(nui_DepthFrameReady);
+        nui.SkeletonStream.Enable();
+        nui.Start();
+    }
+
+    WriteableBitmap wb1 = null;
+    WriteableBitmap wb2 = null;
+    WriteableBitmap wb3 = null;
+
+    void nui_DepthFrameReady(object sender, DepthImageFrameReadyEventArgs e)
+    {
+        DepthImageFrame ImageParam = e.OpenDepthImageFrame();
+        if (ImageParam == null) return;
+        short[] ImageBits = new short[ImageParam.PixelDataLength];
+        ImageParam.CopyPixelDataTo(ImageBits);
+        WriteableBitmap wb = new WriteableBitmap(ImageParam.Width,
+                                            ImageParam.Height,
+                                            96, 96,
+                                            PixelFormats.Bgr32,
+                                            null);
+        wb.WritePixels(new Int32Rect(0, 0, ImageParam.Width, ImageParam.Height),
+                    GetPlayer(ImageParam,
+                        ImageBits,
+                        nui.DepthStream,
+                        0),
+                    ImageParam.Width * 4,
+                    0);
+        image1.Source = wb;
+
+        wb1 = new WriteableBitmap(ImageParam.Width,
+                                ImageParam.Height,
+                                96, 96,
+                                PixelFormats.Bgr32,
+                                null);
+        wb2 = new WriteableBitmap(ImageParam.Width,
+                                ImageParam.Height,
+                                96, 96,
+                                PixelFormats.Bgr32,
+                                null);
+        wb3 = new WriteableBitmap(ImageParam.Width,
+                                ImageParam.Height,
+                                96, 96,
+                                PixelFormats.Bgr32,
+                                null);
+
+        Int32Rect iRect = new Int32Rect(0, 0, ImageParam.Width, ImageParam.Height);
+
+        wb1.WritePixels(iRect, GetPlayer(ImageParam,
+                                        ImageBits,
+                                        nui.DepthStream, 1),
+                        ImageParam.Width * 4,
+                        0);
+        wb2.WritePixels(iRect, GetPlayer(ImageParam,
+                                        ImageBits,
+                                        nui.DepthStream, 2),
+                        ImageParam.Width * 4,
+                        0);
+        wb3.WritePixels(iRect, GetPlayer(ImageParam,
+                                        ImageBits,
+                                        nui.DepthStream, 3),
+                        ImageParam.Width * 4,
+                        0);
+    }
+
+    byte[] GetPlayer(DepthImageFrame PImage, short[] depthFrame, DepthImageStream depthStream, int nSel)
+    {
+        byte[] playerCoded = new byte[PImage.Width * PImage.Height * 4];
+
+        byte[] cColorR = { 0x00, 0x00, 0xFF };
+        byte[] cColorG = { 0x00, 0xFF, 0x00 };
+        byte[] cColorB = { 0xFF, 0x00, 0x00 };
+        long[] lCount = { 0, 0, 0 }; // 각 플레이어의 픽셀수가 담길 배열
+
+        // 각각의 픽셀에 대한 작업 수행
+        for (int i16 = 0, i32 = 0; i16 < depthFrame.Length && i32 < playerCoded.Length;
+            i16++, i32 += 4)
+        {
+
+            int player = depthFrame[i16] & DepthImageFrame.PlayerIndexBitmask;
+
+            SetRGB(playerCoded, i32, 0x00, 0x00, 0x00);
+
+            // nSel 매개변수가 플레이어와 일치할 경우
+            // 그 플레이어에 해당 색상을 픽셀에 설정하고
+            // 플레이어의 픽셀 수 증가
+
+            for (int j = 0; j < 3; j++)
+            {
+
+                if (player == j + 1)
+                {
+                    if (nSel == 0 || player == nSel)
+                    {
+                        SetRGB(playerCoded, i32, cColorR[j], cColorG[j], cColorB[j]);
+                        lCount[j] += 1;
+                    }
+                    break;
+                }
+            }
+
+        }
+
+        // nSel이 0인 경우 각 플레이어의 픽셀 수를 텍스트 블록에 표시
+        if (nSel == 0)
+        {
+            textBlock1.Text = string.Format("P1픽셀수 : {0}", lCount[0]);
+            textBlock2.Text = string.Format("P2픽셀수 : {0}", lCount[1]);
+            textBlock3.Text = string.Format("P3픽셀수 : {0}", lCount[2]);
+        }
+
+        return playerCoded;
+    }
+    void SetRGB(byte[] nPlayers, int nPos, byte r, byte g, byte b)
+    {
+        nPlayers[nPos + 2] = r;
+        nPlayers[nPos + 1] = g;
+        nPlayers[nPos + 0] = b;
+    }
+
+    private void button1_Click(object sender, RoutedEventArgs e)
+    {
+        SavePng(wb1, "c:\\Temp\\p1.png");
+        SavePng(wb2, "c:\\Temp\\p2.png");
+        SavePng(wb3, "c:\\Temp\\p3.png");
+
+        OpenFile("c:\\Temp\\p1.png");
+        OpenFile("c:\\Temp\\p2.png");
+        OpenFile("c:\\Temp\\p3.png");
+    }
+
+    void SavePng(WriteableBitmap src, String strFilename) // 각각의 사용자의 픽셀만을 저장
+    {
+        BitmapEncoder encoder = null;
+        encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(src));
+        FileStream stream = new FileStream(strFilename,
+                                        FileMode.Create,
+                                        FileAccess.Write);
+        encoder.Save(stream);
+        stream.Close();
+    }
+
+    void OpenFile(String strFilename)
+    {
+        System.Diagnostics.Process exe = new System.Diagnostics.Process();
+        exe.StartInfo.FileName = strFilename;
+        exe.Start();
+    }
+}
+```
+
+## 6. 면적측정
+### 결과물
+- 처음 인식된 사용자 한명만 이용
+
+- 솔루션5를 이용  
+해당 사용자의 픽셀 수 계산 및 출력
+
+- 솔루션4를 이용  
+해당 사용자가 인식된 픽셀의 거리의 총 합 / 해당 사용자의 픽셀 수를 이용하여 평균거리 계산 및 출력
+
+  
+- (총 픽셀 수 * 총 거리 수) / 1000000000 를 하여 무게 추정 및 출력
+
+```c#
+public partial class MainWindow : Window
+{
+    public MainWindow()
+    {
+        InitializeComponent();
+        InitializeNui();
+    }
+
+    KinectSensor nui = null;
+
+    void InitializeNui()
+    {
+        nui = KinectSensor.KinectSensors[0];
+        nui.DepthStream.Enable(DepthImageFormat.Resolution320x240Fps30);
+        nui.DepthFrameReady += new
+            EventHandler<DepthImageFrameReadyEventArgs>(nui_DepthFrameReady);
+        nui.SkeletonStream.Enable();
+        nui.Start();
+    }
+
+    void nui_DepthFrameReady(object sender, DepthImageFrameReadyEventArgs e)
+    {
+        DepthImageFrame ImageParam = e.OpenDepthImageFrame();
+
+        if (ImageParam == null) return;
+
+        short[] ImageBits = new short[ImageParam.PixelDataLength];
+        ImageParam.CopyPixelDataTo(ImageBits);
+
+        WriteableBitmap wb = new WriteableBitmap(ImageParam.Width,
+                                                ImageParam.Height,
+                                                96, 96,
+                                                PixelFormats.Bgr32,
+                                                null);
+        wb.WritePixels(new Int32Rect(0, 0, ImageParam.Width, ImageParam.Height),
+                        GetPlayer(ImageParam,
+                                ImageBits, ((KinectSensor)sender).DepthStream),
+                        ImageParam.Width * 4,
+                        0);
+        image1.Source = wb;
+    }
+
+    byte[] GetPlayer(DepthImageFrame PImage, short[] depthFrame, DepthImageStream depthStream)
+    {
+        byte[] playerCoded = new byte[PImage.Width * PImage.Height * 4];
+
+        long lPixel = 0;
+        long lDist = 0;
+        int nPlayer = -1;
+
+        for (int i16 = 0, i32 = 0; i16 < depthFrame.Length && i32 < playerCoded.Length;
+            i16++, i32 += 4)
+        {
+            int player = depthFrame[i16] & DepthImageFrame.PlayerIndexBitmask;
+            int nDistance = depthFrame[i16] >> DepthImageFrame.PlayerIndexBitmaskWidth;
+            SetRGB(playerCoded, i32, 0x00, 0x00, 0x00);
+
+
+            // 조건: 처음 인식된 플레이어 한명만 작동되도록.
+            if (player > 0 && nPlayer <= 0) nPlayer = player;
+            if (player == nPlayer)
+            {
+                if (nDistance < depthStream.TooFarDepth &&
+                    nDistance > depthStream.TooNearDepth)
+                {
+                    // 플레이어가 적당한 거리에 있을 경우 실행
+                    lDist += nDistance;
+                    lPixel += 1;
+                    // 처음 인식된 플레이어만 흰 색
+                    SetRGB(playerCoded, i32, 0xFF, 0xFF, 0xFF);
+                }
+            }
+
+        }
+        if (lPixel > 0)
+        {
+            textBlock1.Text = string.Format("픽셀: {0}", lPixel); // 솔루션5와 같이 계산된 픽셀
+            textBlock2.Text = string.Format("거리: {0}", lDist / lPixel); // 1픽셀 당 평균 거리
+
+            float weight = (lPixel * lDist) / 1000000000; // 거리와 면적을 이용하여 무게 추정
+            textBlock3.Text = string.Format("무게: {0:0} kg", weight);
+        }
+
+        return playerCoded;
+    }
+
+    void SetRGB(byte[] nPlayers, int nPos, byte r, byte g, byte b)
+    {
+        nPlayers[nPos + 2] = r;
+        nPlayers[nPos + 1] = g;
+        nPlayers[nPos + 0] = b;
+    }
+}
+```
