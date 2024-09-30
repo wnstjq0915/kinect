@@ -1,13 +1,13 @@
 # kinect
 ## 목차
-### 1. 뎁스스트림
-### 2. 영상모니터
-### 3. 사용자인덱스
-### 4. 거리
-### 5. 사용자저장
-### 6. 면적측정
+### [1. ](https://github.com/wnstjq0915/kinect?tab=readme-ov-file#1-%EB%8E%81%EC%8A%A4%EC%8A%A4%ED%8A%B8%EB%A6%BC-1)뎁스스트림
+### [2. ](https://github.com/wnstjq0915/kinect?tab=readme-ov-file#2-%EC%98%81%EC%83%81%EB%AA%A8%EB%8B%88%ED%84%B0-1)영상모니터
+### [3. ](https://github.com/wnstjq0915/kinect?tab=readme-ov-file#3-%EC%82%AC%EC%9A%A9%EC%9E%90%EC%9D%B8%EB%8D%B1%EC%8A%A4-1)사용자인덱스
+### [4. ](https://github.com/wnstjq0915/kinect?tab=readme-ov-file#4-%EA%B1%B0%EB%A6%AC-1)거리
+### [5. ](https://github.com/wnstjq0915/kinect?tab=readme-ov-file#5-%EC%82%AC%EC%9A%A9%EC%9E%90%EC%A0%80%EC%9E%A5-1)사용자저장
+### [6. ](https://github.com/wnstjq0915/kinect?tab=readme-ov-file#6-%EB%A9%B4%EC%A0%81%EC%B8%A1%EC%A0%95-1)면적측정
 
-## [1. ](https://github.com/wnstjq0915/kinect?tab=readme-ov-file#1-%EB%8E%81%EC%8A%A4%EC%8A%A4%ED%8A%B8%EB%A6%BC-1)뎁스스트림
+## 1. 뎁스스트림
 ### 결과물
 - 이미지1: 뎁스스트림을 이용하여 인식된 거리에 따라 밝기가 다른 흑백영상 출력
 ```c#
@@ -55,7 +55,7 @@ public partial class MainWindow : Window
 }
 ```
 
-## [2. ](https://github.com/wnstjq0915/kinect?tab=readme-ov-file#2-%EC%98%81%EC%83%81%EB%AA%A8%EB%8B%88%ED%84%B0-1)영상모니터
+## 2. 영상모니터
 ### 결과물
 - 이미지1: 컬러스트림
 - 이미지2: 스켈레톤을 이용하여 사용자가 인식된 부분만 흰색으로 표시하는 뎁스스트림
@@ -172,7 +172,7 @@ public partial class MainWindow : Window
 }
 ```
 
-## [3. ](https://github.com/wnstjq0915/kinect?tab=readme-ov-file#3-%EC%82%AC%EC%9A%A9%EC%9E%90%EC%9D%B8%EB%8D%B1%EC%8A%A4-1)사용자인덱스
+## 3. 사용자인덱스
 ### 결과물
 - 뎁스스트림을 이용하여 사용자마다 색을 다르게 출력
 ```
@@ -256,7 +256,7 @@ public partial class MainWindow : Window
 }
 ```
 
-## [4. ](https://github.com/wnstjq0915/kinect?tab=readme-ov-file#4-%EA%B1%B0%EB%A6%AC-1)거리
+## 4. 거리
 ### 결과물
 - 뎁스스트림을 이용하여 모든 요소의 거리를 측정한 뒤에 각각의 거리를 조건문을 통하여 색을 다르게 표현
 
@@ -354,7 +354,7 @@ public partial class MainWindow : Window
 }
 ```
 
-## [5. ](https://github.com/wnstjq0915/kinect?tab=readme-ov-file#5-%EC%82%AC%EC%9A%A9%EC%9E%90%EC%A0%80%EC%9E%A5-1)사용자저장
+## 5. 사용자저장
 ### 결과물
 - 솔루션3을 이용하여 각 유저의 색을 다르게 출력하고 사용자 각각 화면에 얼마나 출력되는지를 픽셀 수로 출력
 
@@ -530,7 +530,7 @@ public partial class MainWindow : Window
 }
 ```
 
-## [6. ](https://github.com/wnstjq0915/kinect?tab=readme-ov-file#6-%EB%A9%B4%EC%A0%81%EC%B8%A1%EC%A0%95-1)면적측정
+## 6. 면적측정
 ### 결과물
 - 처음 인식된 사용자 한명만 이용
 
