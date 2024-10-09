@@ -1,4 +1,7 @@
 # kinect
+- [진행](https://github.com/wnstjq0915/kinect/blob/main/%EC%A7%84%ED%96%89.md)
+- [GPT](https://github.com/wnstjq0915/kinect/blob/main/gpt.md)
+
 ## 목차
 ### [1. ](https://github.com/wnstjq0915/kinect?tab=readme-ov-file#1-%EB%8E%81%EC%8A%A4%EC%8A%A4%ED%8A%B8%EB%A6%BC-1)뎁스스트림
 ### [2. ](https://github.com/wnstjq0915/kinect?tab=readme-ov-file#2-%EC%98%81%EC%83%81%EB%AA%A8%EB%8B%88%ED%84%B0-1)영상모니터
