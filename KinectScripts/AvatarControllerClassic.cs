@@ -1,94 +1,113 @@
 using UnityEngine;
-// Windows.kinect ì‚¬ìš©;
+//using Windows.Kinect;
 
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.IO;
-using System.Text; 
+using System.Text;
 
+/// <summary>
+/// AvatarControllerClassic Å¬·¡½º´Â Kinect µ¥ÀÌÅÍ¸¦ »ç¿ëÇÏ¿© ¾Æ¹ÙÅ¸ÀÇ »À´ë¸¦ ¸ÅÇÎÇÏ´Â ±â´ÉÀ» Á¦°øÇÕ´Ï´Ù.
+/// </summary>
 public class AvatarControllerClassic : AvatarController
-{	
-	// ë¼ˆì™€ ì¼ì¹˜í•˜ëŠ” ê³µê°œ ë³€ìˆ˜.
-    // ë¹„ì–´ ìˆìœ¼ë©´ KinectëŠ” ë‹¨ìˆœíˆ ì¶”ì í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤.
-	public Transform HipCenter;
-	public Transform Spine;
-	public Transform Neck;
-	public Transform Head;
-	
-	public Transform LeftClavicle;
-	public Transform LeftUpperArm;
-	public Transform LeftElbow; 
-	public Transform LeftHand;
-	private Transform LeftFingers = null;
-	
-	public Transform RightClavicle;
-	public Transform RightUpperArm;
-	public Transform RightElbow;
-	public Transform RightHand;
-	private Transform RightFingers = null;
-	
-	public Transform LeftThigh;
-	public Transform LeftKnee;
-	public Transform LeftFoot;
-	private Transform LeftToes = null;
-	
-	public Transform RightThigh;
-	public Transform RightKnee;
-	public Transform RightFoot;
-	private Transform RightToes = null;
+{
+    /*
+    Å¬·¡½º ¼³¸í: AvatarControllerClassic´Â Kinect ¼¾¼­¸¦ ÅëÇØ ¾Æ¹ÙÅ¸ÀÇ »À´ë¸¦ ¸ÅÇÎÇÏ´Â ±â´ÉÀ» Á¦°øÇÕ´Ï´Ù.
+        ÀÌ Å¬·¡½º´Â AvatarController Å¬·¡½º¸¦ »ó¼Ó¹ŞÀ¸¸ç,
+        ´Ù¾çÇÑ º¯È¯(Transform) º¯¼ö¸¦ ÅëÇØ ¾Æ¹ÙÅ¸ÀÇ ½ÅÃ¼ ºÎÀ§¿¡ ´ëÇÑ ÂüÁ¶¸¦ ÀúÀåÇÕ´Ï´Ù.
+    º¯¼ö ¼³¸í: °¢ º¯È¯ º¯¼ö´Â ¾Æ¹ÙÅ¸ÀÇ Æ¯Á¤ ºÎÀ§¿¡ ¸ÅÇÎµË´Ï´Ù.
+        ¿¹¸¦ µé¾î, HipCenter´Â ¾ûµ¢ÀÌ Áß¾ÓÀ» ³ªÅ¸³À´Ï´Ù.
+    MapBones ¸Ş¼Òµå: ÀÌ ¸Ş¼Òµå´Â ¾Æ¹ÙÅ¸ÀÇ »À´ë¸¦ ¸ÅÇÎÇÏ´Â ÁÖ¿ä ±â´ÉÀ» ¼öÇàÇÕ´Ï´Ù.
+        °¢ ½ÅÃ¼ ºÎÀ§ÀÇ º¯È¯À» ¹è¿­¿¡ ÇÒ´çÇÏ¸ç, ¿ÀÇÁ¼Â ³ëµå°¡ ¾ø´Â °æ¿ì »õ·Î »ı¼ºÇÕ´Ï´Ù.
+        »õ·Î »ı¼ºµÈ ¿ÀÇÁ¼Â ³ëµå´Â ¾Æ¹ÙÅ¸ÀÇ ºÎ¸ğ·Î ¼³Á¤µÇ°í, ¾Æ¹ÙÅ¸ÀÇ ·ÎÄÃ À§Ä¡¿Í È¸ÀüÀÌ ÃÊ±âÈ­µË´Ï´Ù.
+    */
 
-	public Transform BodyRoot;
-	public GameObject OffsetNode;
-	
+    // Kinect µ¥ÀÌÅÍ¿¡ ¸ÅÇÎµÉ ¾Æ¹ÙÅ¸ÀÇ »À´ë º¯È¯À» Á¤ÀÇÇÕ´Ï´Ù.
+    public Transform HipCenter; // ¾ûµ¢ÀÌ Áß¾Ó
+    public Transform Spine; // Ã´Ãß
+    public Transform Neck; // ¸ñ
+    public Transform Head; // ¸Ó¸®
 
-	// ë§¤í•‘ ë  ë¼ˆê°€ ì„ ì–¸ ëœ ê²½ìš° í•´ë‹¹ ë¼ˆë¥¼ ëª¨ë¸ì— ë§¤í•‘í•˜ì‹­ì‹œì˜¤.
-	protected override void MapBones()
-	{
-		bones[0] = HipCenter;
-		bones[1] = Spine;
-		bones[2] = Neck;
-		bones[3] = Head;
-	
-		bones[4] = LeftClavicle;
-		bones[5] = LeftUpperArm;
-		bones[6] = LeftElbow;
-		bones[7] = LeftHand;
-		bones[8] = LeftFingers;
-	
-		bones[9] = RightClavicle;
-		bones[10] = RightUpperArm;
-		bones[11] = RightElbow;
-		bones[12] = RightHand;
-		bones[13] = RightFingers;
-	
-		bones[14] = LeftThigh;
-		bones[15] = LeftKnee;
-		bones[16] = LeftFoot;
-		bones[17] = LeftToes;
-	
-		bones[18] = RightThigh;
-		bones[19] = RightKnee;
-		bones[20] = RightFoot;
-		bones[21] = RightToes;
+    public Transform LeftClavicle; // ¿ŞÂÊ ¼â°ñ
+    public Transform LeftUpperArm; // ¿ŞÂÊ »ó¿Ï
+    public Transform LeftElbow; // ¿ŞÂÊ ÆÈ²ŞÄ¡
+    public Transform LeftHand; // ¿ŞÂÊ ¼Õ
+    private Transform LeftFingers = null; // ¿ŞÂÊ ¼Õ°¡¶ô (¿É¼Ç)
 
-		// ë°”ë”” ë¿Œë¦¬ ë° ì˜¤í”„ì…‹
-		bodyRoot = BodyRoot;
-		offsetNode = OffsetNode;
+    public Transform RightClavicle; // ¿À¸¥ÂÊ ¼â°ñ
+    public Transform RightUpperArm; // ¿À¸¥ÂÊ »ó¿Ï
+    public Transform RightElbow; // ¿À¸¥ÂÊ ÆÈ²ŞÄ¡
+    public Transform RightHand; // ¿À¸¥ÂÊ ¼Õ
+    private Transform RightFingers = null; // ¿À¸¥ÂÊ ¼Õ°¡¶ô (¿É¼Ç)
 
-		if(offsetNode == null)
-		{
-			offsetNode = new GameObject(name + "Ctrl") { layer = transform.gameObject.layer, tag = transform.gameObject.tag };
-			offsetNode.transform.position = transform.position;
-			offsetNode.transform.rotation = transform.rotation;
-			offsetNode.transform.parent = transform.parent;
-			
-			transform.parent = offsetNode.transform;
-			transform.localPosition = Vector3.zero;
-			transform.localRotation = Quaternion.identity;
-		}
-	}
-	
+    public Transform LeftThigh; // ¿ŞÂÊ Çã¹÷Áö
+    public Transform LeftKnee; // ¿ŞÂÊ ¹«¸­
+    public Transform LeftFoot; // ¿ŞÂÊ ¹ß
+    private Transform LeftToes = null; // ¿ŞÂÊ ¹ß°¡¶ô (¿É¼Ç)
+
+    public Transform RightThigh; // ¿À¸¥ÂÊ Çã¹÷Áö
+    public Transform RightKnee; // ¿À¸¥ÂÊ ¹«¸­
+    public Transform RightFoot; // ¿À¸¥ÂÊ ¹ß
+    private Transform RightToes = null; // ¿À¸¥ÂÊ ¹ß°¡¶ô (¿É¼Ç)
+
+    public Transform BodyRoot; // ¾Æ¹ÙÅ¸ÀÇ º»Ã¼ ·çÆ®
+    public GameObject OffsetNode; // ¿ÀÇÁ¼Â ³ëµå
+
+    /// <summary>
+    /// »À´ë¸¦ ¾Æ¹ÙÅ¸ ¸ğµ¨¿¡ ¸ÅÇÎÇÕ´Ï´Ù.
+    /// </summary>
+    protected override void MapBones()
+    {
+        // ¾Æ¹ÙÅ¸ »À´ë¿¡ ´ëÇÑ º¯È¯À» ¹è¿­¿¡ ¸ÅÇÎÇÕ´Ï´Ù.
+        bones[0] = HipCenter; // ¾ûµ¢ÀÌ Áß¾Ó
+        bones[1] = Spine; // Ã´Ãß
+        bones[2] = Neck; // ¸ñ
+        bones[3] = Head; // ¸Ó¸®
+
+        bones[4] = LeftClavicle; // ¿ŞÂÊ ¼â°ñ
+        bones[5] = LeftUpperArm; // ¿ŞÂÊ »ó¿Ï
+        bones[6] = LeftElbow; // ¿ŞÂÊ ÆÈ²ŞÄ¡
+        bones[7] = LeftHand; // ¿ŞÂÊ ¼Õ
+        bones[8] = LeftFingers; // ¿ŞÂÊ ¼Õ°¡¶ô (¿É¼Ç)
+
+        bones[9] = RightClavicle; // ¿À¸¥ÂÊ ¼â°ñ
+        bones[10] = RightUpperArm; // ¿À¸¥ÂÊ »ó¿Ï
+        bones[11] = RightElbow; // ¿À¸¥ÂÊ ÆÈ²ŞÄ¡
+        bones[12] = RightHand; // ¿À¸¥ÂÊ ¼Õ
+        bones[13] = RightFingers; // ¿À¸¥ÂÊ ¼Õ°¡¶ô (¿É¼Ç)
+
+        bones[14] = LeftThigh; // ¿ŞÂÊ Çã¹÷Áö
+        bones[15] = LeftKnee; // ¿ŞÂÊ ¹«¸­
+        bones[16] = LeftFoot; // ¿ŞÂÊ ¹ß
+        bones[17] = LeftToes; // ¿ŞÂÊ ¹ß°¡¶ô (¿É¼Ç)
+
+        bones[18] = RightThigh; // ¿À¸¥ÂÊ Çã¹÷Áö
+        bones[19] = RightKnee; // ¿À¸¥ÂÊ ¹«¸­
+        bones[20] = RightFoot; // ¿À¸¥ÂÊ ¹ß
+        bones[21] = RightToes; // ¿À¸¥ÂÊ ¹ß°¡¶ô (¿É¼Ç)
+
+        // º»Ã¼ ·çÆ®¿Í ¿ÀÇÁ¼Â ³ëµå¸¦ ¼³Á¤ÇÕ´Ï´Ù.
+        bodyRoot = BodyRoot;
+        offsetNode = OffsetNode;
+
+        // ¿ÀÇÁ¼Â ³ëµå°¡ nullÀÎ °æ¿ì »õ·Î »ı¼ºÇÕ´Ï´Ù.
+        if (offsetNode == null)
+        {
+            offsetNode = new GameObject(name + "Ctrl")
+            {
+                layer = transform.gameObject.layer,
+                tag = transform.gameObject.tag
+            };
+            offsetNode.transform.position = transform.position;
+            offsetNode.transform.rotation = transform.rotation;
+            offsetNode.transform.parent = transform.parent;
+
+            // ¾Æ¹ÙÅ¸¸¦ ¿ÀÇÁ¼Â ³ëµåÀÇ ÀÚ½ÄÀ¸·Î ¼³Á¤ÇÕ´Ï´Ù.
+            transform.parent = offsetNode.transform;
+            transform.localPosition = Vector3.zero; // À§Ä¡¸¦ ÃÊ±âÈ­
+            transform.localRotation = Quaternion.identity; // È¸ÀüÀ» ÃÊ±âÈ­
+        }
+    }
 }
-

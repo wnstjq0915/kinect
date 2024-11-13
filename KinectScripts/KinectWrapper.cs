@@ -1,78 +1,84 @@
 using UnityEngine;
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 using System.IO;
-using System.Text; 
+using System.Text;
 
-// ë‹¤ì–‘í•œ êµ¬ì¡° ë° DLL ìˆ˜ì…ì„ ë³´ìœ í•˜ëŠ” ë˜í¼ í´ë˜ìŠ¤
-// Kinectì™€ í•¨ê»˜ ëª¨ë¸ì„ ì„¤ì •í•´ì•¼í–ˆìŠµë‹ˆë‹¤.
+/// <summary>
+/// KinectWrapper Å¬·¡½º´Â Kinect ¼¾¼­¿Í »óÈ£ÀÛ¿ëÇÏ±â À§ÇÑ ¸Ş¼Òµå¿Í ±¸Á¶Ã¼¸¦ Æ÷ÇÔÇÕ´Ï´Ù.
+/// </summary>
 public class KinectWrapper
 {
-	public static class Constants
-	{
-		public const int NuiSkeletonCount = 6;
-    	public const int NuiSkeletonMaxTracked = 2;
-    	public const int NuiSkeletonInvalidTrackingID = 0;
-		
-		public const float NuiDepthHorizontalFOV = 58.5f;
-		public const float NuiDepthVerticalFOV = 45.6f;
-		
-		public const int ColorImageWidth = 640;
-		public const int ColorImageHeight = 480;
-		public const NuiImageResolution ColorImageResolution = NuiImageResolution.resolution640x480;
-		
-		public const int DepthImageWidth = 640;
-		public const int DepthImageHeight = 480;
-		public const NuiImageResolution DepthImageResolution = NuiImageResolution.resolution640x480;
-		
-		public const bool IsNearMode = false;
-		
-		public const float MinTimeBetweenSameGestures = 0.0f;
-		public const float PoseCompleteDuration = 1.0f;
-		public const float ClickStayDuration = 2.5f;
-	}
-	
-	/// <summary>
-	///Structs and constants for interfacing C# with the Kinect.dll 
-	/// </summary>
+    /*
+    ÀÌ ÄÚµå´Â Kinect¿ÍÀÇ »óÈ£ÀÛ¿ëÀ» À§ÇÑ ´Ù¾çÇÑ ±¸Á¶Ã¼¿Í ¸Ş¼Òµå°¡ Æ÷ÇÔµÇ¾î ÀÖ½À´Ï´Ù.
+    Constants Å¬·¡½º´Â Kinect¿¡¼­ »ç¿ëÇÒ ¼ö ÀÖ´Â ´Ù¾çÇÑ »ó¼ö °ªÀ» Á¤ÀÇÇÕ´Ï´Ù.
+    NuiInitializeFlags, NuiErrorCodes, NuiSkeletonPositionIndex µîÀÇ ¿­°ÅÇüÀº Kinect SDK¿Í °ü·ÃµÈ ÇÃ·¡±×¿Í ¿À·ù ÄÚµå, Á¶ÀÎÆ® ÀÎµ¦½º¸¦ Á¤ÀÇÇÕ´Ï´Ù.
+    NuiSkeletonData¿Í NuiSkeletonFrame ±¸Á¶Ã¼´Â ½ºÄÌ·¹Åæ µ¥ÀÌÅÍ¸¦ ÀúÀåÇÏ´Â µ¥ »ç¿ëµË´Ï´Ù.
+    ¿©·¯ ¸Ş¼Òµå´Â KinectÀÇ ´Ù¾çÇÑ ±â´ÉÀ» È£ÃâÇÏ°í, ½ºÄÌ·¹Åæ µ¥ÀÌÅÍ¸¦ Ã³¸®ÇÏ´Â µ¥ ÇÊ¿äÇÑ ÈÄÃ³¸®¸¦ ¼öÇàÇÕ´Ï´Ù.
+    */
+    public static class Constants
+    {
+        public const int NuiSkeletonCount = 6; // ÃÖ´ë ½ºÄÌ·¹Åæ ¼ö
+        public const int NuiSkeletonMaxTracked = 2; // ÃÖ´ë ÃßÀû °¡´ÉÇÑ ½ºÄÌ·¹Åæ ¼ö
+        public const int NuiSkeletonInvalidTrackingID = 0; // À¯È¿ÇÏÁö ¾ÊÀº ÃßÀû ID
 
+        public const float NuiDepthHorizontalFOV = 58.5f; // ±íÀÌ ¼öÆò ½Ã¾ß°¢
+        public const float NuiDepthVerticalFOV = 45.6f; // ±íÀÌ ¼öÁ÷ ½Ã¾ß°¢
+
+        public const int ColorImageWidth = 640; // »ö»ó ÀÌ¹ÌÁö ³Êºñ
+        public const int ColorImageHeight = 480; // »ö»ó ÀÌ¹ÌÁö ³ôÀÌ
+        public const NuiImageResolution ColorImageResolution = NuiImageResolution.resolution640x480; // »ö»ó ÀÌ¹ÌÁö ÇØ»óµµ
+
+        public const int DepthImageWidth = 640; // ±íÀÌ ÀÌ¹ÌÁö ³Êºñ
+        public const int DepthImageHeight = 480; // ±íÀÌ ÀÌ¹ÌÁö ³ôÀÌ
+        public const NuiImageResolution DepthImageResolution = NuiImageResolution.resolution640x480; // ±íÀÌ ÀÌ¹ÌÁö ÇØ»óµµ
+
+        public const bool IsNearMode = false; // ±Ù°Å¸® ¸ğµå »ç¿ë ¿©ºÎ
+
+        public const float MinTimeBetweenSameGestures = 0.0f; // µ¿ÀÏ Á¦½ºÃ³ °£ ÃÖ¼Ò ½Ã°£
+        public const float PoseCompleteDuration = 1.0f; // Æ÷Áî ¿Ï·á Áö¼Ó ½Ã°£
+        public const float ClickStayDuration = 2.5f; // Å¬¸¯ Áö¼Ó ½Ã°£
+    }
+
+    // ´Ù¾çÇÑ ÇÃ·¡±×¸¦ Á¤ÀÇÇÏ´Â ¿­°ÅÇü
     [Flags]
     public enum NuiInitializeFlags : uint
     {
-		UsesAudio = 0x10000000,
+        UsesAudio = 0x10000000,
         UsesDepthAndPlayerIndex = 0x00000001,
         UsesColor = 0x00000002,
         UsesSkeleton = 0x00000008,
         UsesDepth = 0x00000020,
-		UsesHighQualityColor = 0x00000040
+        UsesHighQualityColor = 0x00000040
     }
-	
-	public enum NuiErrorCodes : uint
-	{
-		FrameNoData = 0x83010001,
-		StreamNotEnabled = 0x83010002,
-		ImageStreamInUse = 0x83010003,
-		FrameLimitExceeded = 0x83010004,
-		FeatureNotInitialized = 0x83010005,
-		DeviceNotGenuine = 0x83010006,
-		InsufficientBandwidth = 0x83010007,
-		DeviceNotSupported = 0x83010008,
-		DeviceInUse = 0x83010009,
-		
-		DatabaseNotFound = 0x8301000D,
-		DatabaseVersionMismatch = 0x8301000E,
-		HardwareFeatureUnavailable = 0x8301000F,
-		
-		DeviceNotConnected = 0x83010014,
-		DeviceNotReady = 0x83010015,
-		SkeletalEngineBusy = 0x830100AA,
-		DeviceNotPowered = 0x8301027F,
-	}
 
+    // Kinect ¿À·ù ÄÚµå¸¦ Á¤ÀÇÇÏ´Â ¿­°ÅÇü
+    public enum NuiErrorCodes : uint
+    {
+        FrameNoData = 0x83010001,
+        StreamNotEnabled = 0x83010002,
+        ImageStreamInUse = 0x83010003,
+        FrameLimitExceeded = 0x83010004,
+        FeatureNotInitialized = 0x83010005,
+        DeviceNotGenuine = 0x83010006,
+        InsufficientBandwidth = 0x83010007,
+        DeviceNotSupported = 0x83010008,
+        DeviceInUse = 0x83010009,
+
+        DatabaseNotFound = 0x8301000D,
+        DatabaseVersionMismatch = 0x8301000E,
+        HardwareFeatureUnavailable = 0x8301000F,
+
+        DeviceNotConnected = 0x83010014,
+        DeviceNotReady = 0x83010015,
+        SkeletalEngineBusy = 0x830100AA,
+        DeviceNotPowered = 0x8301027F,
+    }
+
+    // ½ºÄÌ·¹Åæ Æ÷Áö¼Ç ÀÎµ¦½º¸¦ Á¤ÀÇÇÏ´Â ¿­°ÅÇü
     public enum NuiSkeletonPositionIndex : int
     {
         HipCenter = 0,
@@ -111,33 +117,33 @@ public class KinectWrapper
         PositionOnly,
         SkeletonTracked
     }
-	
-	public enum NuiImageType
-	{
-		DepthAndPlayerIndex = 0,	// USHORT
-		Color,						// RGB32 data
-		ColorYUV,					// YUY2 stream from camera h/w, but converted to RGB32 before user getting it.
-		ColorRawYUV,				// YUY2 stream from camera h/w.
-		Depth						// USHORT
-	}
-	
-	public enum NuiImageResolution
-	{
-		resolutionInvalid = -1,
-		resolution80x60 = 0,
-		resolution320x240 = 1,
-		resolution640x480 = 2,
-		resolution1280x960 = 3     // for hires color only
-	}
-	
-	public enum NuiImageStreamFlags
-	{
-		None = 0x00000000,
-		SupressNoFrameData = 0x0001000,
-		EnableNearMode = 0x00020000,
-		TooFarIsNonZero = 0x0004000
-	}
-	
+
+    public enum NuiImageType
+    {
+        DepthAndPlayerIndex = 0, // USHORT
+        Color, // RGB32 µ¥ÀÌÅÍ
+        ColorYUV, // YUY2 Ä«¸Ş¶ó ÇÏµå¿ş¾îÀÇ ½ºÆ®¸², RGB32·Î º¯È¯µÊ
+        ColorRawYUV, // YUY2 Ä«¸Ş¶ó ÇÏµå¿ş¾îÀÇ ½ºÆ®¸²
+        Depth // USHORT
+    }
+
+    public enum NuiImageResolution
+    {
+        resolutionInvalid = -1,
+        resolution80x60 = 0,
+        resolution320x240 = 1,
+        resolution640x480 = 2,
+        resolution1280x960 = 3 // °íÇØ»óµµ »ö»ó Àü¿ë
+    }
+
+    public enum NuiImageStreamFlags
+    {
+        None = 0x00000000,
+        SupressNoFrameData = 0x0001000,
+        EnableNearMode = 0x00020000,
+        TooFarIsNonZero = 0x0004000
+    }
+
     [Flags]
     public enum FrameEdges
     {
@@ -148,152 +154,157 @@ public class KinectWrapper
         Bottom = 8
     }
 
-	public struct NuiSkeletonData
+    // ½ºÄÌ·¹Åæ µ¥ÀÌÅÍ ±¸Á¶Ã¼
+    public struct NuiSkeletonData
     {
-        public NuiSkeletonTrackingState eTrackingState;
-        public uint dwTrackingID;
-        public uint dwEnrollmentIndex_NotUsed;
-        public uint dwUserIndex;
-        public Vector4 Position;
+        public NuiSkeletonTrackingState eTrackingState; // ÃßÀû »óÅÂ
+        public uint dwTrackingID; // ÃßÀû ID
+        public uint dwEnrollmentIndex_NotUsed; // »ç¿ëµÇÁö ¾Ê´Â ÀÎµ¦½º
+        public uint dwUserIndex; // »ç¿ëÀÚ ÀÎµ¦½º
+        public Vector4 Position; // ½ºÄÌ·¹Åæ À§Ä¡
         [MarshalAsAttribute(UnmanagedType.ByValArray, SizeConst = 20, ArraySubType = UnmanagedType.Struct)]
-        public Vector4[] SkeletonPositions;
+        public Vector4[] SkeletonPositions; // ½ºÄÌ·¹Åæ À§Ä¡ ¹è¿­
         [MarshalAsAttribute(UnmanagedType.ByValArray, SizeConst = 20, ArraySubType = UnmanagedType.Struct)]
-        public NuiSkeletonPositionTrackingState[] eSkeletonPositionTrackingState;
-        public uint dwQualityFlags;
+        public NuiSkeletonPositionTrackingState[] eSkeletonPositionTrackingState; // À§Ä¡ ÃßÀû »óÅÂ ¹è¿­
+        public uint dwQualityFlags; // Ç°Áú ÇÃ·¡±×
     }
-	
+
+    // ½ºÄÌ·¹Åæ ÇÁ·¹ÀÓ ±¸Á¶Ã¼
     public struct NuiSkeletonFrame
     {
-        public Int64 liTimeStamp;
-        public uint dwFrameNumber;
-        public uint dwFlags;
-        public Vector4 vFloorClipPlane;
-        public Vector4 vNormalToGravity;
+        public Int64 liTimeStamp; // Å¸ÀÓ½ºÅÆÇÁ
+        public uint dwFrameNumber; // ÇÁ·¹ÀÓ ¹øÈ£
+        public uint dwFlags; // ÇÃ·¡±×
+        public Vector4 vFloorClipPlane; // ¹Ù´Ú Å¬¸³ Æò¸é
+        public Vector4 vNormalToGravity; // Áß·Â ¹æÇâ
         [MarshalAsAttribute(UnmanagedType.ByValArray, SizeConst = 6, ArraySubType = UnmanagedType.Struct)]
-        public NuiSkeletonData[] SkeletonData;
+        public NuiSkeletonData[] SkeletonData; // ½ºÄÌ·¹Åæ µ¥ÀÌÅÍ ¹è¿­
     }
-	
-	public struct NuiTransformSmoothParameters
-	{
-		public float fSmoothing;
-		public float fCorrection;
-		public float fPrediction;
-		public float fJitterRadius;
-		public float fMaxDeviationRadius;
-	}
-	
+
+    public struct NuiTransformSmoothParameters
+    {
+        public float fSmoothing; // ºÎµå·¯¿ò
+        public float fCorrection; // º¸Á¤
+        public float fPrediction; // ¿¹Ãø
+        public float fJitterRadius; // ÁöÅÍ ¹İ°æ
+        public float fMaxDeviationRadius; // ÃÖ´ë ÆíÂ÷ ¹İ°æ
+    }
+
     public struct NuiSkeletonBoneRotation
     {
-        public Matrix4x4 rotationMatrix;
-        public Quaternion rotationQuaternion;
+        public Matrix4x4 rotationMatrix; // È¸Àü Çà·Ä
+        public Quaternion rotationQuaternion; // È¸Àü ÄõÅÍ´Ï¾ğ
     }
 
     public struct NuiSkeletonBoneOrientation
     {
-        public NuiSkeletonPositionIndex endJoint;
-        public NuiSkeletonPositionIndex startJoint;
-        public NuiSkeletonBoneRotation hierarchicalRotation;
-        public NuiSkeletonBoneRotation absoluteRotation;
+        public NuiSkeletonPositionIndex endJoint; // ³¡ Á¶ÀÎÆ®
+        public NuiSkeletonPositionIndex startJoint; // ½ÃÀÛ Á¶ÀÎÆ®
+        public NuiSkeletonBoneRotation hierarchicalRotation; // °èÃşÀû È¸Àü
+        public NuiSkeletonBoneRotation absoluteRotation; // Àı´ë È¸Àü
     }
-	
-	public struct NuiImageViewArea
-	{
-	    public int eDigitalZoom;
-	    public int lCenterX;
-	    public int lCenterY;
-	}
-	
-	public class NuiImageBuffer
-	{
-		public int m_Width;
-		public int m_Height;
-		public int m_BytesPerPixel;
-		public IntPtr m_pBuffer;
-	}
-	
-	public struct NuiImageFrame
-	{
-		public Int64 liTimeStamp;
-		public uint dwFrameNumber;
-		public NuiImageType eImageType;
-		public NuiImageResolution eResolution;
-		// [Marshalasattribute (UnmanagedType.interface)]
-		public IntPtr pFrameTexture;
-		public uint dwFrameFlags_NotUsed;
-		public NuiImageViewArea ViewArea_NotUsed;
-	}
-	
-	public struct NuiLockedRect
-	{
-		public int pitch;
-		public int size;
-		// [Marshalasattribute (UnmanagedType.U8)] 
-		public IntPtr pBits; 
-		
-	}
-	
-	public struct ColorCust
-	{
-		public byte b;
-		public byte g;
-		public byte r;
-		public byte a;
-	}
-	
-	public struct ColorBuffer
-	{
-		[MarshalAs(UnmanagedType.ByValArray, SizeConst = 640 * 480, ArraySubType = UnmanagedType.Struct)]
-		public ColorCust[] pixels;
-	}
-	
-	public struct DepthBuffer
-	{
-		[MarshalAs(UnmanagedType.ByValArray, SizeConst = 640 * 480, ArraySubType = UnmanagedType.U2)]
-		public ushort[] pixels;
-	}
-	
-	public struct NuiSurfaceDesc
-	{
-		uint width;
-		uint height;
-	}
-	
-	[Guid("13ea17f5-ff2e-4670-9ee5-1297a6e880d1")]
-	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-	[ComImport()]
-	public interface INuiFrameTexture
-	{
-		[MethodImpl (MethodImplOptions.InternalCall, MethodCodeType=MethodCodeType.Runtime)]
-		[PreserveSig]
-		int BufferLen();
-		[MethodImpl (MethodImplOptions.InternalCall, MethodCodeType=MethodCodeType.Runtime)]
-		[PreserveSig]
-		int Pitch();
-		[MethodImpl (MethodImplOptions.InternalCall, MethodCodeType=MethodCodeType.Runtime)]
-		[PreserveSig]
-		int LockRect(uint Level,ref NuiLockedRect pLockedRect,IntPtr pRect, uint Flags);
-		[MethodImpl (MethodImplOptions.InternalCall, MethodCodeType=MethodCodeType.Runtime)]
-		[PreserveSig]
-		int GetLevelDesc(uint Level, ref NuiSurfaceDesc pDesc);
-		[MethodImpl (MethodImplOptions.InternalCall, MethodCodeType=MethodCodeType.Runtime)]
-		[PreserveSig]
-		int UnlockRect(uint Level);
-	}
 
-    /* 
-	 * kinect NUI (general) functions
-	 */
+    public struct NuiImageViewArea
+    {
+        public int eDigitalZoom; // µğÁöÅĞ ÁÜ
+        public int lCenterX; // Áß½É X
+        public int lCenterY; // Áß½É Y
+    }
 
-    [DllImportAttribute(@"Kinect10.dll", EntryPoint = "NuiInitialize")]
+    public class NuiImageBuffer
+    {
+        public int m_Width; // ÀÌ¹ÌÁö ³Êºñ
+        public int m_Height; // ÀÌ¹ÌÁö ³ôÀÌ
+        public int m_BytesPerPixel; // ÇÈ¼¿´ç ¹ÙÀÌÆ® ¼ö
+        public IntPtr m_pBuffer; // ÀÌ¹ÌÁö ¹öÆÛ Æ÷ÀÎÅÍ
+    }
+
+    public struct NuiImageFrame
+    {
+        public Int64 liTimeStamp; // Å¸ÀÓ½ºÅÆÇÁ
+        public uint dwFrameNumber; // ÇÁ·¹ÀÓ ¹øÈ£
+        public NuiImageType eImageType; // ÀÌ¹ÌÁö Å¸ÀÔ
+        public NuiImageResolution eResolution; // ÀÌ¹ÌÁö ÇØ»óµµ
+        public IntPtr pFrameTexture; // ÇÁ·¹ÀÓ ÅØ½ºÃ³ Æ÷ÀÎÅÍ
+        public uint dwFrameFlags_NotUsed; // »ç¿ëµÇÁö ¾Ê´Â ÇÃ·¡±×
+        public NuiImageViewArea ViewArea_NotUsed; // »ç¿ëµÇÁö ¾Ê´Â ºä ¿µ¿ª
+    }
+
+    public struct NuiLockedRect
+    {
+        public int pitch; // ÇÇÄ¡
+        public int size; // Å©±â
+        public IntPtr pBits; // ºñÆ® Æ÷ÀÎÅÍ
+    }
+
+    public struct ColorCust
+    {
+        public byte b; // ºí·ç
+        public byte g; // ±×¸°
+        public byte r; // ·¹µå
+        public byte a; // ¾ËÆÄ
+    }
+
+    public struct ColorBuffer
+    {
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 640 * 480, ArraySubType = UnmanagedType.Struct)]
+        public ColorCust[] pixels; // ÇÈ¼¿ ¹è¿­
+    }
+
+    public struct DepthBuffer
+    {
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 640 * 480, ArraySubType = UnmanagedType.U2)]
+        public ushort[] pixels; // ±íÀÌ ÇÈ¼¿ ¹è¿­
+    }
+
+    public struct NuiSurfaceDesc
+    {
+        uint width; // ³Êºñ
+        uint height; // ³ôÀÌ
+    }
+
+    [Guid("13ea17f5-ff2e-4670-9ee5-1297a6e880d1")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    [ComImport()]
+    public interface INuiFrameTexture
+    {
+        // ÇÁ·¹ÀÓ ÅØ½ºÃ³ÀÇ ¹öÆÛ ±æÀÌ¸¦ ¹İÈ¯ÇÕ´Ï´Ù.
+        [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+        [PreserveSig]
+        int BufferLen();
+
+        // ÇÁ·¹ÀÓ ÅØ½ºÃ³ÀÇ ÇÇÄ¡¸¦ ¹İÈ¯ÇÕ´Ï´Ù.
+        [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+        [PreserveSig]
+        int Pitch();
+
+        // ÅØ½ºÃ³ÀÇ »ç°¢ÇüÀ» Àá±×°í Á¤º¸¸¦ ¹İÈ¯ÇÕ´Ï´Ù.
+        [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+        [PreserveSig]
+        int LockRect(uint Level, ref NuiLockedRect pLockedRect, IntPtr pRect, uint Flags);
+
+        // ·¹º§ ¼³¸íÀ» ¹İÈ¯ÇÕ´Ï´Ù.
+        [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+        [PreserveSig]
+        int GetLevelDesc(uint Level, ref NuiSurfaceDesc pDesc);
+
+        // ÅØ½ºÃ³ÀÇ »ç°¢Çü Àá±İÀ» ÇØÁ¦ÇÕ´Ï´Ù.
+        [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+        [PreserveSig]
+        int UnlockRect(uint Level);
+    }
+
+    // Kinect NUI (ÀÏ¹İ) ÇÔ¼öµé
+    [DllImport(@"Kinect10.dll", EntryPoint = "NuiInitialize")]
     public static extern int NuiInitialize(NuiInitializeFlags dwFlags);
 
-    [DllImportAttribute(@"Kinect10.dll", EntryPoint = "NuiShutdown")]
+    [DllImport(@"Kinect10.dll", EntryPoint = "NuiShutdown")]
     public static extern void NuiShutdown();
 
-    [DllImportAttribute(@"Kinect10.dll", EntryPoint = "NuiCameraElevationSetAngle")]
+    [DllImport(@"Kinect10.dll", EntryPoint = "NuiCameraElevationSetAngle")]
     public static extern int NuiCameraElevationSetAngle(int angle);
 
-    [DllImportAttribute(@"Kinect10.dll", EntryPoint = "NuiCameraElevationGetAngle")]
+    [DllImport(@"Kinect10.dll", EntryPoint = "NuiCameraElevationGetAngle")]
     public static extern int NuiCameraElevationGetAngle(out int plAngleDegrees);
 
     [DllImport(@"Kinect10.dll", EntryPoint = "NuiImageGetColorPixelCoordinatesFromDepthPixelAtResolution")]
@@ -302,142 +313,146 @@ public class KinectWrapper
     [DllImport(@"Kinect10.dll", EntryPoint = "NuiGetSensorCount")]
     public static extern int NuiGetSensorCount(out int pCount);
 
-    /*
-	 * kinect skeleton functions
-	 */
-
-    [DllImportAttribute(@"Kinect10.dll", EntryPoint = "NuiSkeletonTrackingEnable")]
+    // Kinect ½ºÄÌ·¹Åæ ÇÔ¼öµé
+    [DllImport(@"Kinect10.dll", EntryPoint = "NuiSkeletonTrackingEnable")]
     public static extern int NuiSkeletonTrackingEnable(IntPtr hNextFrameEvent, uint dwFlags);
 
-    [DllImportAttribute(@"Kinect10.dll", EntryPoint = "NuiSkeletonGetNextFrame")]
+    [DllImport(@"Kinect10.dll", EntryPoint = "NuiSkeletonGetNextFrame")]
     public static extern int NuiSkeletonGetNextFrame(uint dwMillisecondsToWait, ref NuiSkeletonFrame pSkeletonFrame);
 
-    [DllImportAttribute(@"Kinect10.dll", EntryPoint = "NuiTransformSmooth")]
+    [DllImport(@"Kinect10.dll", EntryPoint = "NuiTransformSmooth")]
     public static extern int NuiTransformSmooth(ref NuiSkeletonFrame pSkeletonFrame, ref NuiTransformSmoothParameters pSmoothingParams);
-	
+
     [DllImport(@"Kinect10.dll", EntryPoint = "NuiSkeletonCalculateBoneOrientations")]
     public static extern int NuiSkeletonCalculateBoneOrientations(ref NuiSkeletonData pSkeletonData, NuiSkeletonBoneOrientation[] pBoneOrientations);
 
-    /*
-	 * kinect video functions
-	 */
-    [DllImportAttribute(@"Kinect10.dll", EntryPoint = "NuiImageStreamOpen")]
+    // Kinect ºñµğ¿À ÇÔ¼öµé
+    [DllImport(@"Kinect10.dll", EntryPoint = "NuiImageStreamOpen")]
     public static extern int NuiImageStreamOpen(NuiImageType eImageType, NuiImageResolution eResolution, uint dwImageFrameFlags_NotUsed, uint dwFrameLimit, IntPtr hNextFrameEvent, ref IntPtr phStreamHandle);
 
-    [DllImportAttribute(@"Kinect10.dll", EntryPoint = "NuiImageStreamGetNextFrame")]
+    [DllImport(@"Kinect10.dll", EntryPoint = "NuiImageStreamGetNextFrame")]
     public static extern int NuiImageStreamGetNextFrame(IntPtr phStreamHandle, uint dwMillisecondsToWait, ref IntPtr ppcImageFrame);
-	
-	[DllImportAttribute(@"Kinect10.dll", EntryPoint = "NuiImageStreamReleaseFrame")]
+
+    [DllImport(@"Kinect10.dll", EntryPoint = "NuiImageStreamReleaseFrame")]
     public static extern int NuiImageStreamReleaseFrame(IntPtr phStreamHandle, IntPtr ppcImageFrame);
-	
-	[DllImportAttribute(@"Kinect10.dll", EntryPoint = "NuiImageStreamSetImageFrameFlags")]
-	public static extern int NuiImageStreamSetImageFrameFlags (IntPtr phStreamHandle, NuiImageStreamFlags dvImageFrameFlags);
-	
-	[DllImportAttribute(@"Kinect10.dll", EntryPoint = "NuiImageResolutionToSize")]
-    public static extern int NuiImageResolutionToSize(NuiImageResolution eResolution,out uint frameWidth,out uint frameHeight);
-	
-	
-	public static string GetNuiErrorString(int hr)
-	{
-		string message = string.Empty;
-		uint uhr = (uint)hr;
-		
-		switch(uhr)
-		{
-			case (uint)NuiErrorCodes.FrameNoData:
-				message = "Frame contains no data.";
-				break;
-			case (uint)NuiErrorCodes.StreamNotEnabled:
-				message = "Stream is not enabled.";
-				break;
-			case (uint)NuiErrorCodes.ImageStreamInUse:
-				message = "Image stream is already in use.";
-				break;
-			case (uint)NuiErrorCodes.FrameLimitExceeded:
-				message = "Frame limit is exceeded.";
-				break;
-			case (uint)NuiErrorCodes.FeatureNotInitialized:
-				message = "Feature is not initialized.";
-				break;
-			case (uint)NuiErrorCodes.DeviceNotGenuine:
-				message = "Device is not genuine.";
-				break;
-			case (uint)NuiErrorCodes.InsufficientBandwidth:
-				message = "Bandwidth is not sufficient.";
-				break;
-			case (uint)NuiErrorCodes.DeviceNotSupported:
-				message = "Device is not supported (e.g. Kinect for XBox 360).";
-				break;
-			case (uint)NuiErrorCodes.DeviceInUse:
-				message = "Device is already in use.";
-				break;
-			case (uint)NuiErrorCodes.DatabaseNotFound:
-				message = "Database not found.";
-				break;
-			case (uint)NuiErrorCodes.DatabaseVersionMismatch:
-				message = "Database version mismatch.";
-				break;
-			case (uint)NuiErrorCodes.HardwareFeatureUnavailable:
-				message = "Hardware feature is not available.";
-				break;
-			case (uint)NuiErrorCodes.DeviceNotConnected:
-				message = "Device is not connected.";
-				break;
-			case (uint)NuiErrorCodes.DeviceNotReady:
-				message = "Device is not ready.";
-				break;
-			case (uint)NuiErrorCodes.SkeletalEngineBusy:
-				message = "Skeletal engine is busy.";
-				break;
-			case (uint)NuiErrorCodes.DeviceNotPowered:
-				message = "Device is not powered.";
-				break;
-				
-			default:
-				message = "hr=0x" + uhr.ToString("X");
-				break;
-		}
-		
-		return message;
-	}
-	
-	public static int GetDepthWidth()
-	{
-		return Constants.DepthImageWidth;
-	}
-	
-	public static int GetDepthHeight()
-	{
-		return Constants.DepthImageHeight;
-	}
-	
-	public static int GetColorWidth()
-	{
-		return Constants.ColorImageWidth;
-	}
-	
-	public static int GetColorHeight()
-	{
-		return Constants.ColorImageHeight;
-	}
-	
-	public static Vector3 MapSkeletonPointToDepthPoint(Vector3 skeletonPoint)
+
+    [DllImport(@"Kinect10.dll", EntryPoint = "NuiImageStreamSetImageFrameFlags")]
+    public static extern int NuiImageStreamSetImageFrameFlags(IntPtr phStreamHandle, NuiImageStreamFlags dvImageFrameFlags);
+
+    [DllImport(@"Kinect10.dll", EntryPoint = "NuiImageResolutionToSize")]
+    public static extern int NuiImageResolutionToSize(NuiImageResolution eResolution, out uint frameWidth, out uint frameHeight);
+
+    /// <summary>
+    /// Kinect ¿À·ù ÄÚµå¸¦ ¹®ÀÚ¿­·Î º¯È¯ÇÕ´Ï´Ù.
+    /// </summary>
+    /// <param name="hr">¿À·ù ÄÚµå</param>
+    /// <returns>¿À·ù ¸Ş½ÃÁö</returns>
+    public static string GetNuiErrorString(int hr)
+    {
+        string message = string.Empty;
+        uint uhr = (uint)hr;
+
+        switch (uhr)
+        {
+            case (uint)NuiErrorCodes.FrameNoData:
+                message = "Frame contains no data.";
+                break;
+            case (uint)NuiErrorCodes.StreamNotEnabled:
+                message = "Stream is not enabled.";
+                break;
+            case (uint)NuiErrorCodes.ImageStreamInUse:
+                message = "Image stream is already in use.";
+                break;
+            case (uint)NuiErrorCodes.FrameLimitExceeded:
+                message = "Frame limit is exceeded.";
+                break;
+            case (uint)NuiErrorCodes.FeatureNotInitialized:
+                message = "Feature is not initialized.";
+                break;
+            case (uint)NuiErrorCodes.DeviceNotGenuine:
+                message = "Device is not genuine.";
+                break;
+            case (uint)NuiErrorCodes.InsufficientBandwidth:
+                message = "Bandwidth is not sufficient.";
+                break;
+            case (uint)NuiErrorCodes.DeviceNotSupported:
+                message = "Device is not supported (e.g. Kinect for XBox 360).";
+                break;
+            case (uint)NuiErrorCodes.DeviceInUse:
+                message = "Device is already in use.";
+                break;
+            case (uint)NuiErrorCodes.DatabaseNotFound:
+                message = "Database not found.";
+                break;
+            case (uint)NuiErrorCodes.DatabaseVersionMismatch:
+                message = "Database version mismatch.";
+                break;
+            case (uint)NuiErrorCodes.HardwareFeatureUnavailable:
+                message = "Hardware feature is not available.";
+                break;
+            case (uint)NuiErrorCodes.DeviceNotConnected:
+                message = "Device is not connected.";
+                break;
+            case (uint)NuiErrorCodes.DeviceNotReady:
+                message = "Device is not ready.";
+                break;
+            case (uint)NuiErrorCodes.SkeletalEngineBusy:
+                message = "Skeletal engine is busy.";
+                break;
+            case (uint)NuiErrorCodes.DeviceNotPowered:
+                message = "Device is not powered.";
+                break;
+
+            default:
+                message = "hr=0x" + uhr.ToString("X");
+                break;
+        }
+
+        return message;
+    }
+
+    public static int GetDepthWidth()
+    {
+        return Constants.DepthImageWidth; // ±íÀÌ ÀÌ¹ÌÁö ³Êºñ ¹İÈ¯
+    }
+
+    public static int GetDepthHeight()
+    {
+        return Constants.DepthImageHeight; // ±íÀÌ ÀÌ¹ÌÁö ³ôÀÌ ¹İÈ¯
+    }
+
+    public static int GetColorWidth()
+    {
+        return Constants.ColorImageWidth; // »ö»ó ÀÌ¹ÌÁö ³Êºñ ¹İÈ¯
+    }
+
+    public static int GetColorHeight()
+    {
+        return Constants.ColorImageHeight; // »ö»ó ÀÌ¹ÌÁö ³ôÀÌ ¹İÈ¯
+    }
+
+    /// <summary>
+    /// ½ºÄÌ·¹Åæ Æ÷ÀÎÆ®¸¦ ±íÀÌ Æ÷ÀÎÆ®·Î ¸ÅÇÎÇÕ´Ï´Ù.
+    /// </summary>
+    /// <param name="skeletonPoint">½ºÄÌ·¹Åæ Æ÷ÀÎÆ®</param>
+    /// <returns>¸ÅÇÎµÈ ±íÀÌ Æ÷ÀÎÆ®</returns>
+    public static Vector3 MapSkeletonPointToDepthPoint(Vector3 skeletonPoint)
     {
         float fDepthX;
         float fDepthY;
         float fDepthZ;
 
-		NuiTransformSkeletonToDepthImage(skeletonPoint, out fDepthX, out fDepthY, out fDepthZ);
-        
-		Vector3 point = new Vector3();
-        point.x = (int) ((fDepthX * Constants.DepthImageWidth) + 0.5f);
-        point.y = (int) ((fDepthY * Constants.DepthImageHeight) + 0.5f);
-        point.z = (int) (fDepthZ + 0.5f);
+        NuiTransformSkeletonToDepthImage(skeletonPoint, out fDepthX, out fDepthY, out fDepthZ);
 
-		return point;
+        Vector3 point = new Vector3();
+        point.x = (int)((fDepthX * Constants.DepthImageWidth) + 0.5f);
+        point.y = (int)((fDepthY * Constants.DepthImageHeight) + 0.5f);
+        point.z = (int)(fDepthZ + 0.5f);
+
+        return point;
     }
 
-
+    // ½ºÄÌ·¹Åæ Æ÷ÀÎÆ®¸¦ ±íÀÌ ÀÌ¹ÌÁö·Î º¯È¯
     private static void NuiTransformSkeletonToDepthImage(Vector3 vPoint, out float pfDepthX, out float pfDepthY, out float pfDepthZ)
     {
         if (vPoint.z > float.Epsilon)
@@ -454,493 +469,525 @@ public class KinectWrapper
         }
     }
 
-	public static int GetSkeletonJointParent(int jointIndex)
-	{
-		switch(jointIndex)
-		{
-			case (int)NuiSkeletonPositionIndex.HipCenter:
-				return (int)NuiSkeletonPositionIndex.HipCenter;
-			case (int)NuiSkeletonPositionIndex.Spine:
-				return (int)NuiSkeletonPositionIndex.HipCenter;
-			case (int)NuiSkeletonPositionIndex.ShoulderCenter:
-				return (int)NuiSkeletonPositionIndex.Spine;
-			case (int)NuiSkeletonPositionIndex.Head:
-				return (int)NuiSkeletonPositionIndex.ShoulderCenter;
-			case (int)NuiSkeletonPositionIndex.ShoulderLeft:
-				return (int)NuiSkeletonPositionIndex.ShoulderCenter;
-			case (int)NuiSkeletonPositionIndex.ElbowLeft:
-				return (int)NuiSkeletonPositionIndex.ShoulderLeft;
-			case (int)NuiSkeletonPositionIndex.WristLeft:
-				return (int)NuiSkeletonPositionIndex.ElbowLeft;
-			case (int)NuiSkeletonPositionIndex.HandLeft:
-				return (int)NuiSkeletonPositionIndex.WristLeft;
-			case (int)NuiSkeletonPositionIndex.ShoulderRight:
-				return (int)NuiSkeletonPositionIndex.ShoulderCenter;
-			case (int)NuiSkeletonPositionIndex.ElbowRight:
-				return (int)NuiSkeletonPositionIndex.ShoulderRight;
-			case (int)NuiSkeletonPositionIndex.WristRight:
-				return (int)NuiSkeletonPositionIndex.ElbowRight;
-			case (int)NuiSkeletonPositionIndex.HandRight:
-				return (int)NuiSkeletonPositionIndex.WristRight;
-			case (int)NuiSkeletonPositionIndex.HipLeft:
-				return (int)NuiSkeletonPositionIndex.HipCenter;
-			case (int)NuiSkeletonPositionIndex.KneeLeft:
-				return (int)NuiSkeletonPositionIndex.HipLeft;
-			case (int)NuiSkeletonPositionIndex.AnkleLeft:
-				return (int)NuiSkeletonPositionIndex.KneeLeft;
-			case (int)NuiSkeletonPositionIndex.FootLeft:
-				return (int)NuiSkeletonPositionIndex.AnkleLeft;
-			case (int)NuiSkeletonPositionIndex.HipRight:
-				return (int)NuiSkeletonPositionIndex.HipCenter;
-			case (int)NuiSkeletonPositionIndex.KneeRight:
-				return (int)NuiSkeletonPositionIndex.HipRight;
-			case (int)NuiSkeletonPositionIndex.AnkleRight:
-				return (int)NuiSkeletonPositionIndex.KneeRight;
-			case (int)NuiSkeletonPositionIndex.FootRight:
-				return (int)NuiSkeletonPositionIndex.AnkleRight;
-		}
-		
-		return (int)NuiSkeletonPositionIndex.HipCenter;
-	}
+    /// <summary>
+    /// ÁÖ¾îÁø Á¶ÀÎÆ® ÀÎµ¦½ºÀÇ ºÎ¸ğ Á¶ÀÎÆ® ÀÎµ¦½º¸¦ ¹İÈ¯ÇÕ´Ï´Ù.
+    /// </summary>
+    /// <param name="jointIndex">Á¶ÀÎÆ® ÀÎµ¦½º</param>
+    /// <returns>ºÎ¸ğ Á¶ÀÎÆ® ÀÎµ¦½º</returns>
+    public static int GetSkeletonJointParent(int jointIndex)
+    {
+        switch (jointIndex)
+        {
+            case (int)NuiSkeletonPositionIndex.HipCenter:
+                return (int)NuiSkeletonPositionIndex.HipCenter;
+            case (int)NuiSkeletonPositionIndex.Spine:
+                return (int)NuiSkeletonPositionIndex.HipCenter;
+            case (int)NuiSkeletonPositionIndex.ShoulderCenter:
+                return (int)NuiSkeletonPositionIndex.Spine;
+            case (int)NuiSkeletonPositionIndex.Head:
+                return (int)NuiSkeletonPositionIndex.ShoulderCenter;
+            case (int)NuiSkeletonPositionIndex.ShoulderLeft:
+                return (int)NuiSkeletonPositionIndex.ShoulderCenter;
+            case (int)NuiSkeletonPositionIndex.ElbowLeft:
+                return (int)NuiSkeletonPositionIndex.ShoulderLeft;
+            case (int)NuiSkeletonPositionIndex.WristLeft:
+                return (int)NuiSkeletonPositionIndex.ElbowLeft;
+            case (int)NuiSkeletonPositionIndex.HandLeft:
+                return (int)NuiSkeletonPositionIndex.WristLeft;
+            case (int)NuiSkeletonPositionIndex.ShoulderRight:
+                return (int)NuiSkeletonPositionIndex.ShoulderCenter;
+            case (int)NuiSkeletonPositionIndex.ElbowRight:
+                return (int)NuiSkeletonPositionIndex.ShoulderRight;
+            case (int)NuiSkeletonPositionIndex.WristRight:
+                return (int)NuiSkeletonPositionIndex.ElbowRight;
+            case (int)NuiSkeletonPositionIndex.HandRight:
+                return (int)NuiSkeletonPositionIndex.WristRight;
+            case (int)NuiSkeletonPositionIndex.HipLeft:
+                return (int)NuiSkeletonPositionIndex.HipCenter;
+            case (int)NuiSkeletonPositionIndex.KneeLeft:
+                return (int)NuiSkeletonPositionIndex.HipLeft;
+            case (int)NuiSkeletonPositionIndex.AnkleLeft:
+                return (int)NuiSkeletonPositionIndex.KneeLeft;
+            case (int)NuiSkeletonPositionIndex.FootLeft:
+                return (int)NuiSkeletonPositionIndex.AnkleLeft;
+            case (int)NuiSkeletonPositionIndex.HipRight:
+                return (int)NuiSkeletonPositionIndex.HipCenter;
+            case (int)NuiSkeletonPositionIndex.KneeRight:
+                return (int)NuiSkeletonPositionIndex.HipRight;
+            case (int)NuiSkeletonPositionIndex.AnkleRight:
+                return (int)NuiSkeletonPositionIndex.KneeRight;
+            case (int)NuiSkeletonPositionIndex.FootRight:
+                return (int)NuiSkeletonPositionIndex.AnkleRight;
+        }
 
-	public static int GetSkeletonMirroredJoint(int jointIndex)
-	{
-		switch(jointIndex)
-		{
-			case (int)NuiSkeletonPositionIndex.ShoulderLeft:
-				return (int)NuiSkeletonPositionIndex.ShoulderRight;
-			case (int)NuiSkeletonPositionIndex.ElbowLeft:
-				return (int)NuiSkeletonPositionIndex.ElbowRight;
-			case (int)NuiSkeletonPositionIndex.WristLeft:
-				return (int)NuiSkeletonPositionIndex.WristRight;
-			case (int)NuiSkeletonPositionIndex.HandLeft:
-				return (int)NuiSkeletonPositionIndex.HandRight;
-			case (int)NuiSkeletonPositionIndex.ShoulderRight:
-				return (int)NuiSkeletonPositionIndex.ShoulderLeft;
-			case (int)NuiSkeletonPositionIndex.ElbowRight:
-				return (int)NuiSkeletonPositionIndex.ElbowLeft;
-			case (int)NuiSkeletonPositionIndex.WristRight:
-				return (int)NuiSkeletonPositionIndex.WristLeft;
-			case (int)NuiSkeletonPositionIndex.HandRight:
-				return (int)NuiSkeletonPositionIndex.HandLeft;
-			case (int)NuiSkeletonPositionIndex.HipLeft:
-				return (int)NuiSkeletonPositionIndex.HipRight;
-			case (int)NuiSkeletonPositionIndex.KneeLeft:
-				return (int)NuiSkeletonPositionIndex.KneeRight;
-			case (int)NuiSkeletonPositionIndex.AnkleLeft:
-				return (int)NuiSkeletonPositionIndex.AnkleRight;
-			case (int)NuiSkeletonPositionIndex.FootLeft:
-				return (int)NuiSkeletonPositionIndex.FootRight;
-			case (int)NuiSkeletonPositionIndex.HipRight:
-				return (int)NuiSkeletonPositionIndex.HipLeft;
-			case (int)NuiSkeletonPositionIndex.KneeRight:
-				return (int)NuiSkeletonPositionIndex.KneeLeft;
-			case (int)NuiSkeletonPositionIndex.AnkleRight:
-				return (int)NuiSkeletonPositionIndex.AnkleLeft;
-			case (int)NuiSkeletonPositionIndex.FootRight:
-				return (int)NuiSkeletonPositionIndex.FootLeft;
-		}
-		
-		return jointIndex;
-	}
+        return (int)NuiSkeletonPositionIndex.HipCenter; // ±âº»°ª
+    }
 
-	public static bool PollSkeleton(ref NuiTransformSmoothParameters smoothParameters, ref NuiSkeletonFrame skeletonFrame)
-	{
-		bool newSkeleton = false;
-		
-		int hr = KinectWrapper.NuiSkeletonGetNextFrame(0, ref skeletonFrame);
-		if(hr == 0)
-		{
-			newSkeleton = true;
-		}
-		
-		if(newSkeleton)
-		{
-			hr = KinectWrapper.NuiTransformSmooth(ref skeletonFrame, ref smoothParameters);
-			if(hr != 0)
-			{
-				Debug.Log("Skeleton Data Smoothing failed");
-			}
-		}
-		
-		return newSkeleton;
-	}
-	
-	public static bool PollColor(IntPtr colorStreamHandle, ref byte[] videoBuffer, ref Color32[] colorImage)
-	{
+    /// <summary>
+    /// ÁÖ¾îÁø Á¶ÀÎÆ® ÀÎµ¦½ºÀÇ ¹İ´ëÆí Á¶ÀÎÆ® ÀÎµ¦½º¸¦ ¹İÈ¯ÇÕ´Ï´Ù.
+    /// </summary>
+    /// <param name="jointIndex">Á¶ÀÎÆ® ÀÎµ¦½º</param>
+    /// <returns>¹İ´ëÆí Á¶ÀÎÆ® ÀÎµ¦½º</returns>
+    public static int GetSkeletonMirroredJoint(int jointIndex)
+    {
+        switch (jointIndex)
+        {
+            case (int)NuiSkeletonPositionIndex.ShoulderLeft:
+                return (int)NuiSkeletonPositionIndex.ShoulderRight;
+            case (int)NuiSkeletonPositionIndex.ElbowLeft:
+                return (int)NuiSkeletonPositionIndex.ElbowRight;
+            case (int)NuiSkeletonPositionIndex.WristLeft:
+                return (int)NuiSkeletonPositionIndex.WristRight;
+            case (int)NuiSkeletonPositionIndex.HandLeft:
+                return (int)NuiSkeletonPositionIndex.HandRight;
+            case (int)NuiSkeletonPositionIndex.ShoulderRight:
+                return (int)NuiSkeletonPositionIndex.ShoulderLeft;
+            case (int)NuiSkeletonPositionIndex.ElbowRight:
+                return (int)NuiSkeletonPositionIndex.ElbowLeft;
+            case (int)NuiSkeletonPositionIndex.WristRight:
+                return (int)NuiSkeletonPositionIndex.WristLeft;
+            case (int)NuiSkeletonPositionIndex.HandRight:
+                return (int)NuiSkeletonPositionIndex.HandLeft;
+            case (int)NuiSkeletonPositionIndex.HipLeft:
+                return (int)NuiSkeletonPositionIndex.HipRight;
+            case (int)NuiSkeletonPositionIndex.KneeLeft:
+                return (int)NuiSkeletonPositionIndex.KneeRight;
+            case (int)NuiSkeletonPositionIndex.AnkleLeft:
+                return (int)NuiSkeletonPositionIndex.AnkleRight;
+            case (int)NuiSkeletonPositionIndex.FootLeft:
+                return (int)NuiSkeletonPositionIndex.FootRight;
+            case (int)NuiSkeletonPositionIndex.HipRight:
+                return (int)NuiSkeletonPositionIndex.HipLeft;
+            case (int)NuiSkeletonPositionIndex.KneeRight:
+                return (int)NuiSkeletonPositionIndex.KneeLeft;
+            case (int)NuiSkeletonPositionIndex.AnkleRight:
+                return (int)NuiSkeletonPositionIndex.AnkleLeft;
+            case (int)NuiSkeletonPositionIndex.FootRight:
+                return (int)NuiSkeletonPositionIndex.FootLeft;
+        }
 
-		IntPtr imageFramePtr = IntPtr.Zero;
-		bool newColor = false;
-	
-		int hr = KinectWrapper.NuiImageStreamGetNextFrame(colorStreamHandle, 0, ref imageFramePtr);
-		if (hr == 0)
-		{
-			newColor = true;
-			
-			NuiImageFrame imageFrame = (NuiImageFrame)Marshal.PtrToStructure(imageFramePtr, typeof(NuiImageFrame));
-			INuiFrameTexture frameTexture = (INuiFrameTexture)Marshal.GetObjectForIUnknown(imageFrame.pFrameTexture);
-			
-			NuiLockedRect lockedRectPtr = new NuiLockedRect();
-			IntPtr r = IntPtr.Zero;
-			
-			frameTexture.LockRect(0, ref lockedRectPtr, r, 0);
-			
-			ColorBuffer cb = (ColorBuffer)Marshal.PtrToStructure(lockedRectPtr.pBits, typeof(ColorBuffer));
-			int totalPixels = Constants.ColorImageWidth * Constants.ColorImageHeight;
-			
-			for (int pix = 0; pix < totalPixels; pix++)
-			{
-				int ind = pix; // totalPixels - pix - 1;
-				
-				colorImage[ind].r = cb.pixels[pix].r;
-				colorImage[ind].g = cb.pixels[pix].g;
-				colorImage[ind].b = cb.pixels[pix].b;
-				colorImage[ind].a = 255;
-			}
-			
-			frameTexture.UnlockRect(0);
-			hr = KinectWrapper.NuiImageStreamReleaseFrame(colorStreamHandle, imageFramePtr);
-		}
-		
-		return newColor;
-	}
-	
-	public static bool PollDepth(IntPtr depthStreamHandle, bool isNearMode, ref ushort[] depthPlayerData)
-	{
-		IntPtr imageFramePtr = IntPtr.Zero;
-		bool newDepth = false;
+        return jointIndex; // ±âº»°ª
+    }
 
-		if (isNearMode)
-		{
-			KinectWrapper.NuiImageStreamSetImageFrameFlags(depthStreamHandle, NuiImageStreamFlags.EnableNearMode);
-		}
-		else
-		{
-			KinectWrapper.NuiImageStreamSetImageFrameFlags(depthStreamHandle, NuiImageStreamFlags.None);
-		}
-		
-		int hr = KinectWrapper.NuiImageStreamGetNextFrame(depthStreamHandle, 0, ref imageFramePtr);
-		if (hr == 0)
-		{
-			newDepth = true;
-			
-			NuiImageFrame imageFrame = (NuiImageFrame)Marshal.PtrToStructure(imageFramePtr, typeof(NuiImageFrame));
-			INuiFrameTexture frameTexture = (INuiFrameTexture)Marshal.GetObjectForIUnknown(imageFrame.pFrameTexture);
-			
-			NuiLockedRect lockedRectPtr = new NuiLockedRect();
-			IntPtr r = IntPtr.Zero;
-			
-			frameTexture.LockRect(0, ref lockedRectPtr,r,0);
-			// DecThplayerData = ExtractDepThimage (lockedRectPtr);
-			
-			DepthBuffer db = (DepthBuffer)Marshal.PtrToStructure(lockedRectPtr.pBits, typeof(DepthBuffer));
-			depthPlayerData = db.pixels;
+    /// <summary>
+    /// ½ºÄÌ·¹Åæ ÇÁ·¹ÀÓÀÇ »õ·Î¿î µ¥ÀÌÅÍ¸¦ °¡Á®¿À°í ½º¹«µùÀ» Àû¿ëÇÕ´Ï´Ù.
+    /// </summary>
+    /// <param name="smoothParameters">½º¹«µù ¸Å°³º¯¼ö</param>
+    /// <param name="skeletonFrame">½ºÄÌ·¹Åæ ÇÁ·¹ÀÓ</param>
+    /// <returns>»õ·Î¿î ½ºÄÌ·¹Åæ µ¥ÀÌÅÍÀÇ ¿©ºÎ</returns>
+    public static bool PollSkeleton(ref NuiTransformSmoothParameters smoothParameters, ref NuiSkeletonFrame skeletonFrame)
+    {
+        bool newSkeleton = false;
 
-			frameTexture.UnlockRect(0);
-			hr = KinectWrapper.NuiImageStreamReleaseFrame(depthStreamHandle, imageFramePtr);
-		}
-		
-		return newDepth;
-	}
-	
-    private static Vector3 GetPositionBetweenIndices(ref Vector3[] jointsPos, NuiSkeletonPositionIndex p1, NuiSkeletonPositionIndex p2) 
-	{
-		Vector3 pVec1 = jointsPos[(int)p1];
-		Vector3 pVec2 = jointsPos[(int)p2];
-		
+        int hr = KinectWrapper.NuiSkeletonGetNextFrame(0, ref skeletonFrame);
+        if (hr == 0)
+        {
+            newSkeleton = true;
+        }
+
+        if (newSkeleton)
+        {
+            hr = KinectWrapper.NuiTransformSmooth(ref skeletonFrame, ref smoothParameters);
+            if (hr != 0)
+            {
+                Debug.Log("Skeleton Data Smoothing failed");
+            }
+        }
+
+        return newSkeleton;
+    }
+
+    /// <summary>
+    /// ÄÃ·¯ ÀÌ¹ÌÁö ÇÁ·¹ÀÓÀ» °¡Á®¿É´Ï´Ù.
+    /// </summary>
+    /// <param name="colorStreamHandle">ÄÃ·¯ ½ºÆ®¸² ÇÚµé</param>
+    /// <param name="videoBuffer">ºñµğ¿À ¹öÆÛ</param>
+    /// <param name="colorImage">ÄÃ·¯ ÀÌ¹ÌÁö µ¥ÀÌÅÍ</param>
+    /// <returns>»õ·Î¿î ÄÃ·¯ µ¥ÀÌÅÍÀÇ ¿©ºÎ</returns>
+    public static bool PollColor(IntPtr colorStreamHandle, ref byte[] videoBuffer, ref Color32[] colorImage)
+    {
+        IntPtr imageFramePtr = IntPtr.Zero;
+        bool newColor = false;
+
+        int hr = KinectWrapper.NuiImageStreamGetNextFrame(colorStreamHandle, 0, ref imageFramePtr);
+        if (hr == 0)
+        {
+            newColor = true;
+
+            NuiImageFrame imageFrame = (NuiImageFrame)Marshal.PtrToStructure(imageFramePtr, typeof(NuiImageFrame));
+            INuiFrameTexture frameTexture = (INuiFrameTexture)Marshal.GetObjectForIUnknown(imageFrame.pFrameTexture);
+
+            NuiLockedRect lockedRectPtr = new NuiLockedRect();
+            IntPtr r = IntPtr.Zero;
+
+            frameTexture.LockRect(0, ref lockedRectPtr, r, 0);
+
+            ColorBuffer cb = (ColorBuffer)Marshal.PtrToStructure(lockedRectPtr.pBits, typeof(ColorBuffer));
+            int totalPixels = Constants.ColorImageWidth * Constants.ColorImageHeight;
+
+            for (int pix = 0; pix < totalPixels; pix++)
+            {
+                int ind = pix; // totalPixels - pix - 1;
+
+                colorImage[ind].r = cb.pixels[pix].r;
+                colorImage[ind].g = cb.pixels[pix].g;
+                colorImage[ind].b = cb.pixels[pix].b;
+                colorImage[ind].a = 255;
+            }
+
+            frameTexture.UnlockRect(0);
+            hr = KinectWrapper.NuiImageStreamReleaseFrame(colorStreamHandle, imageFramePtr);
+        }
+
+        return newColor;
+    }
+
+    /// <summary>
+    /// ±íÀÌ ÀÌ¹ÌÁö ÇÁ·¹ÀÓÀ» °¡Á®¿É´Ï´Ù.
+    /// </summary>
+    /// <param name="depthStreamHandle">±íÀÌ ½ºÆ®¸² ÇÚµé</param>
+    /// <param name="isNearMode">±Ù°Å¸® ¸ğµå ¿©ºÎ</param>
+    /// <param name="depthPlayerData">±íÀÌ ¹× ÇÃ·¹ÀÌ¾î µ¥ÀÌÅÍ</param>
+    /// <returns>»õ·Î¿î ±íÀÌ µ¥ÀÌÅÍÀÇ ¿©ºÎ</returns>
+    public static bool PollDepth(IntPtr depthStreamHandle, bool isNearMode, ref ushort[] depthPlayerData)
+    {
+        IntPtr imageFramePtr = IntPtr.Zero;
+        bool newDepth = false;
+
+        if (isNearMode)
+        {
+            KinectWrapper.NuiImageStreamSetImageFrameFlags(depthStreamHandle, NuiImageStreamFlags.EnableNearMode);
+        }
+        else
+        {
+            KinectWrapper.NuiImageStreamSetImageFrameFlags(depthStreamHandle, NuiImageStreamFlags.None);
+        }
+
+        int hr = KinectWrapper.NuiImageStreamGetNextFrame(depthStreamHandle, 0, ref imageFramePtr);
+        if (hr == 0)
+        {
+            newDepth = true;
+
+            NuiImageFrame imageFrame = (NuiImageFrame)Marshal.PtrToStructure(imageFramePtr, typeof(NuiImageFrame));
+            INuiFrameTexture frameTexture = (INuiFrameTexture)Marshal.GetObjectForIUnknown(imageFrame.pFrameTexture);
+
+            NuiLockedRect lockedRectPtr = new NuiLockedRect();
+            IntPtr r = IntPtr.Zero;
+
+            frameTexture.LockRect(0, ref lockedRectPtr, r, 0);
+
+            DepthBuffer db = (DepthBuffer)Marshal.PtrToStructure(lockedRectPtr.pBits, typeof(DepthBuffer));
+            depthPlayerData = db.pixels;
+
+            frameTexture.UnlockRect(0);
+            hr = KinectWrapper.NuiImageStreamReleaseFrame(depthStreamHandle, imageFramePtr);
+        }
+
+        return newDepth;
+    }
+
+    // µÎ ÀÎµ¦½º »çÀÌÀÇ À§Ä¡¸¦ ¹İÈ¯ÇÕ´Ï´Ù.
+    private static Vector3 GetPositionBetweenIndices(ref Vector3[] jointsPos, NuiSkeletonPositionIndex p1, NuiSkeletonPositionIndex p2)
+    {
+        Vector3 pVec1 = jointsPos[(int)p1];
+        Vector3 pVec2 = jointsPos[(int)p2];
+
         return pVec2 - pVec1;
     }
-           
-    // ì—´ì„ ì‚¬ìš©í•˜ì—¬ ë§¤íŠ¸ë¦­ìŠ¤ë¥¼ ì±„ ì›ë‹ˆë‹¤
-    private static void PopulateMatrix(ref Matrix4x4 jointOrientation, Vector3 xCol, Vector3 yCol, Vector3 zCol) 
-	{
-    	jointOrientation.SetColumn(0, xCol);
-    	jointOrientation.SetColumn(1, yCol);
-    	jointOrientation.SetColumn(2, zCol);
+
+    // Çà·ÄÀ» ¿­À» »ç¿ëÇÏ¿© Ã¤¿ó´Ï´Ù.
+    private static void PopulateMatrix(ref Matrix4x4 jointOrientation, Vector3 xCol, Vector3 yCol, Vector3 zCol)
+    {
+        jointOrientation.SetColumn(0, xCol);
+        jointOrientation.SetColumn(1, yCol);
+        jointOrientation.SetColumn(2, zCol);
     }
 
-    // X ì¶•ì„ ì§€ì •í•˜ëŠ” ë²¡í„°ë¡œë¶€í„° ë°©í–¥ì„ êµ¬ì„±í•©ë‹ˆë‹¤.
-    private static void MakeMatrixFromX(Vector3 v1, ref Matrix4x4 jointOrientation, bool flip) 
-	{
-        // ë§¤íŠ¸ë¦­ìŠ¤ ì—´
+    // xÃàÀ» ÁöÁ¤ÇÏ´Â º¤ÅÍ¿¡¼­ ¹æÇâÀ» ¸¸µì´Ï´Ù.
+    private static void MakeMatrixFromX(Vector3 v1, ref Matrix4x4 jointOrientation, bool flip)
+    {
+        // Çà·Ä ¿­ º¯¼ö
         Vector3 xCol;
         Vector3 yCol;
         Vector3 zCol;
 
-        // ì²« ë²ˆì§¸ ì—´ì„ ì´ì „ ì¡°ì¸íŠ¸ì™€ í˜„ì¬ì˜ ë²¡í„°ë¡œ ì„¤ì •í•˜ë©´ 2 ê°œì˜ ììœ ë„ë¥¼ ì„¤ì •í•©ë‹ˆë‹¤.
+        // Ã¹ ¹øÂ° ¿­À» ÇöÀç Á¶ÀÎÆ®¿Í ÀÌÀü Á¶ÀÎÆ® »çÀÌÀÇ º¤ÅÍ·Î ¼³Á¤
         xCol = v1.normalized;
 
-        // ë‘ ë²ˆì§¸ ì—´ì„ ì²« ë²ˆì§¸ ì—´ì— ìˆ˜ì§ ì¸ ì„ì˜ì˜ ë²¡í„°ë¡œ ì„¤ì •
+        // µÎ ¹øÂ° ¿­À» Ã¹ ¹øÂ° ¿­¿¡ ¼öÁ÷ÀÎ ÀÓÀÇÀÇ º¤ÅÍ·Î ¼³Á¤
         yCol.x = 0.0f;
         yCol.y = !flip ? xCol.z : -xCol.z;
         yCol.z = !flip ? -xCol.y : xCol.y;
         yCol.Normalize();
 
-        // ì„¸ ë²ˆì§¸ ì—´ì€ ì²˜ìŒ ë‘ ê°œì— ì˜í•´ ì™„ì „íˆ ê²°ì •ë˜ë©° í¬ë¡œìŠ¤ ì œí’ˆì´ì–´ì•¼í•©ë‹ˆë‹¤.
+        // ¼¼ ¹øÂ° ¿­Àº Ã¹ ¹øÂ° µÎ ¿­ÀÇ ¿ÜÀû¿¡ ÀÇÇØ °áÁ¤µÊ
         zCol = Vector3.Cross(xCol, yCol);
 
-        // ê°’ì„ ë§¤íŠ¸ë¦­ìŠ¤ë¡œ ë³µì‚¬í•˜ì‹­ì‹œì˜¤
+        // Çà·Ä¿¡ °ª º¹»ç
         PopulateMatrix(ref jointOrientation, xCol, yCol, zCol);
     }
 
-    // y ì¶•ì„ ì§€ì •í•˜ëŠ” ë²¡í„°ë¡œë¶€í„° ë°©í–¥ì„ êµ¬ì„±í•©ë‹ˆë‹¤.
-    private static void MakeMatrixFromY(Vector3 v1, ref Matrix4x4 jointOrientation) 
-	{
-        // ë§¤íŠ¸ë¦­ìŠ¤ ì—´
+    // yÃàÀ» ÁöÁ¤ÇÏ´Â º¤ÅÍ¿¡¼­ ¹æÇâÀ» ¸¸µì´Ï´Ù.
+    private static void MakeMatrixFromY(Vector3 v1, ref Matrix4x4 jointOrientation)
+    {
+        // Çà·Ä ¿­ º¯¼ö
         Vector3 xCol;
         Vector3 yCol;
         Vector3 zCol;
 
-        // ì²« ë²ˆì§¸ ì—´ì„ ì´ì „ ì¡°ì¸íŠ¸ì™€ í˜„ì¬ì˜ ë²¡í„°ë¡œ ì„¤ì •í•˜ë©´ 2 ê°œì˜ ììœ ë„ë¥¼ ì„¤ì •í•©ë‹ˆë‹¤.
+        // Ã¹ ¹øÂ° ¿­À» ÇöÀç Á¶ÀÎÆ®¿Í ÀÌÀü Á¶ÀÎÆ® »çÀÌÀÇ º¤ÅÍ·Î ¼³Á¤
         yCol = v1.normalized;
 
-        // ë‘ ë²ˆì§¸ ì—´ì„ ì²« ë²ˆì§¸ ì—´ì— ìˆ˜ì§ ì¸ ì„ì˜ì˜ ë²¡í„°ë¡œ ì„¤ì •
+        // µÎ ¹øÂ° ¿­À» Ã¹ ¹øÂ° ¿­¿¡ ¼öÁ÷ÀÎ ÀÓÀÇÀÇ º¤ÅÍ·Î ¼³Á¤
         xCol.x = yCol.y;
         xCol.y = -yCol.x;
         xCol.z = 0.0f;
         xCol.Normalize();
 
-        // ì„¸ ë²ˆì§¸ ì—´ì€ ì²˜ìŒ ë‘ ê°œì— ì˜í•´ ì™„ì „íˆ ê²°ì •ë˜ë©° í¬ë¡œìŠ¤ ì œí’ˆì´ì–´ì•¼í•©ë‹ˆë‹¤.
+        // ¼¼ ¹øÂ° ¿­Àº Ã¹ ¹øÂ° µÎ ¿­ÀÇ ¿ÜÀû¿¡ ÀÇÇØ °áÁ¤µÊ
         zCol = Vector3.Cross(xCol, yCol);
 
-        // ê°’ì„ ë§¤íŠ¸ë¦­ìŠ¤ë¡œ ë³µì‚¬í•˜ì‹­ì‹œì˜¤
+        // Çà·Ä¿¡ °ª º¹»ç
         PopulateMatrix(ref jointOrientation, xCol, yCol, zCol);
     }
-   
-    // X ì¶•ì„ ì§€ì •í•˜ëŠ” ë²¡í„°ë¡œë¶€í„° ë°©í–¥ì„ êµ¬ì„±í•©ë‹ˆë‹¤.
-    private static void MakeMatrixFromZ(Vector3 v1, ref Matrix4x4 jointOrientation) 
-	{
-        // ë§¤íŠ¸ë¦­ìŠ¤ ì—´
+
+    // zÃàÀ» ÁöÁ¤ÇÏ´Â º¤ÅÍ¿¡¼­ ¹æÇâÀ» ¸¸µì´Ï´Ù.
+    private static void MakeMatrixFromZ(Vector3 v1, ref Matrix4x4 jointOrientation)
+    {
+        // Çà·Ä ¿­ º¯¼ö
         Vector3 xCol;
         Vector3 yCol;
         Vector3 zCol;
 
-         // ì²« ë²ˆì§¸ ì—´ì„ ì´ì „ ì¡°ì¸íŠ¸ì™€ í˜„ì¬ì˜ ë²¡í„°ë¡œ ì„¤ì •í•˜ë©´ 2 ê°œì˜ ììœ ë„ë¥¼ ì„¤ì •í•©ë‹ˆë‹¤.
+        // Ã¹ ¹øÂ° ¿­À» ÇöÀç Á¶ÀÎÆ®¿Í ÀÌÀü Á¶ÀÎÆ® »çÀÌÀÇ º¤ÅÍ·Î ¼³Á¤
         zCol = v1.normalized;
 
-        // ë‘ ë²ˆì§¸ ì—´ì„ ì²« ë²ˆì§¸ ì—´ì— ìˆ˜ì§ ì¸ ì„ì˜ì˜ ë²¡í„°ë¡œ ì„¤ì •
+        // µÎ ¹øÂ° ¿­À» Ã¹ ¹øÂ° ¿­¿¡ ¼öÁ÷ÀÎ ÀÓÀÇÀÇ º¤ÅÍ·Î ¼³Á¤
         xCol.x = zCol.y;
         xCol.y = -zCol.x;
         xCol.z = 0.0f;
         xCol.Normalize();
 
-        // ì„¸ ë²ˆì§¸ ì—´ì€ ì²˜ìŒ ë‘ ê°œì— ì˜í•´ ì™„ì „íˆ ê²°ì •ë˜ë©° í¬ë¡œìŠ¤ ì œí’ˆì´ì–´ì•¼í•©ë‹ˆë‹¤.
+        // ¼¼ ¹øÂ° ¿­Àº Ã¹ ¹øÂ° µÎ ¿­ÀÇ ¿ÜÀû¿¡ ÀÇÇØ °áÁ¤µÊ
         yCol = Vector3.Cross(zCol, xCol);
 
-        // ê°’ì„ ë§¤íŠ¸ë¦­ìŠ¤ë¡œ ë³µì‚¬í•˜ì‹­ì‹œì˜¤
+        // Çà·Ä¿¡ °ª º¹»ç
         PopulateMatrix(ref jointOrientation, xCol, yCol, zCol);
     }
 
-    // 2 ê°œì˜ ë²¡í„°ë¡œë¶€í„° ë°©í–¥ì„ êµ¬ì„±í•œë‹¤ : ì²« ë²ˆì§¸ëŠ” x ì¶•ì„ ì§€ì •í•˜ê³  ë‹¤ìŒì€ y ì¶•ì„ ì§€ì •í•œë‹¤.
-    // ì²« ë²ˆì§¸ ë²¡í„°ë¥¼ X ì¶•ìœ¼ë¡œ ì‚¬ìš©í•œ ë‹¤ìŒ í¬ë¡œìŠ¤ ì œí’ˆì„ ì‚¬ìš©í•˜ì—¬ ë‹¤ë¥¸ ì¶•ì„ êµ¬ì„±í•©ë‹ˆë‹¤.
-    private static void MakeMatrixFromXY(Vector3 xUnnormalized, Vector3 yUnnormalized, ref Matrix4x4 jointOrientation) 
-	{
-        // ë§¤íŠ¸ë¦­ìŠ¤ ì—´
+    // xÃàÀ» ÁöÁ¤ÇÏ´Â µÎ º¤ÅÍ¿¡¼­ ¹æÇâÀ» ¸¸µì´Ï´Ù.
+    private static void MakeMatrixFromXY(Vector3 xUnnormalized, Vector3 yUnnormalized, ref Matrix4x4 jointOrientation)
+    {
+        // Çà·Ä ¿­ º¯¼ö
         Vector3 xCol;
         Vector3 yCol;
         Vector3 zCol;
 
-        // ì¬ë°°ì¹˜í•˜ê³  ë’¤ì§‘ê¸° ìœ„í•´ ì„¸ ê°œì˜ ë‹¤ë¥¸ ì—´ì„ ì„¤ì •
+        // ¿­À» Àç¹è¿­ÇÏ°í ÇÃ¸³ÇÏ¿© ¼³Á¤
         xCol = xUnnormalized.normalized;
         zCol = Vector3.Cross(xCol, yUnnormalized.normalized).normalized;
         yCol = Vector3.Cross(zCol, xCol).normalized;
 
-        // ê°’ì„ ë§¤íŠ¸ë¦­ìŠ¤ë¡œ ë³µì‚¬í•˜ì‹­ì‹œì˜¤
+        // Çà·Ä¿¡ °ª º¹»ç
         PopulateMatrix(ref jointOrientation, xCol, yCol, zCol);
     }
-   
-    // 2 ê°œì˜ ë²¡í„°ë¡œë¶€í„° ë°©í–¥ì„ êµ¬ì„±í•œë‹¤ : ì²« ë²ˆì§¸ëŠ” x ì¶•ì„ ì§€ì •í•˜ê³  ë‹¤ìŒì€ y ì¶•ì„ ì§€ì •í•œë‹¤.
-    // ë‘ ë²ˆì§¸ ë²¡í„°ë¥¼ Y ì¶•ìœ¼ë¡œ ì‚¬ìš©í•œ ë‹¤ìŒ í¬ë¡œìŠ¤ ì œí’ˆì„ ì‚¬ìš©í•˜ì—¬ ë‹¤ë¥¸ ì¶•ì„ êµ¬ì„±í•©ë‹ˆë‹¤.
-    private static void MakeMatrixFromYX(Vector3 xUnnormalized, Vector3 yUnnormalized, ref Matrix4x4 jointOrientation) 
-	{
-        // ë§¤íŠ¸ë¦­ìŠ¤ ì—´
+
+    // yÃàÀ» ÁöÁ¤ÇÏ´Â µÎ º¤ÅÍ¿¡¼­ ¹æÇâÀ» ¸¸µì´Ï´Ù.
+    private static void MakeMatrixFromYX(Vector3 xUnnormalized, Vector3 yUnnormalized, ref Matrix4x4 jointOrientation)
+    {
+        // Çà·Ä ¿­ º¯¼ö
         Vector3 xCol;
         Vector3 yCol;
         Vector3 zCol;
 
-        // ì¬ë°°ì¹˜í•˜ê³  ë’¤ì§‘ê¸° ìœ„í•´ ì„¸ ê°œì˜ ë‹¤ë¥¸ ì—´ì„ ì„¤ì •
+        // ¿­À» Àç¹è¿­ÇÏ°í ÇÃ¸³ÇÏ¿© ¼³Á¤
         yCol = yUnnormalized.normalized;
         zCol = Vector3.Cross(xUnnormalized.normalized, yCol).normalized;
         xCol = Vector3.Cross(yCol, zCol).normalized;
 
-        // ê°’ì„ ë§¤íŠ¸ë¦­ìŠ¤ë¡œ ë³µì‚¬í•˜ì‹­ì‹œì˜¤
+        // Çà·Ä¿¡ °ª º¹»ç
         PopulateMatrix(ref jointOrientation, xCol, yCol, zCol);
     }
-   
-    // 2 ê°œì˜ ë²¡í„°ë¡œë¶€í„° ë°©í–¥ì„ êµ¬ì„±í•œë‹¤ : ì²« ë²ˆì§¸ëŠ” x ì¶•ì„ ì§€ì •í•˜ê³  ë‹¤ìŒì€ y ì¶•ì„ ì§€ì •í•œë‹¤.
-    // ë‘ ë²ˆì§¸ ë²¡í„°ë¥¼ Y ì¶•ìœ¼ë¡œ ì‚¬ìš©í•œ ë‹¤ìŒ í¬ë¡œìŠ¤ ì œí’ˆì„ ì‚¬ìš©í•˜ì—¬ ë‹¤ë¥¸ ì¶•ì„ êµ¬ì„±í•©ë‹ˆë‹¤.
-    private static void MakeMatrixFromYZ(Vector3 yUnnormalized, Vector3 zUnnormalized, ref Matrix4x4 jointOrientation) 
-	{
-        // ë§¤íŠ¸ë¦­ìŠ¤ ì—´
+
+    // zÃàÀ» ÁöÁ¤ÇÏ´Â µÎ º¤ÅÍ¿¡¼­ ¹æÇâÀ» ¸¸µì´Ï´Ù.
+    private static void MakeMatrixFromYZ(Vector3 yUnnormalized, Vector3 zUnnormalized, ref Matrix4x4 jointOrientation)
+    {
+        // Çà·Ä ¿­ º¯¼ö
         Vector3 xCol;
         Vector3 yCol;
         Vector3 zCol;
 
-        // ì¬ë°°ì¹˜í•˜ê³  ë’¤ì§‘ê¸° ìœ„í•´ ì„¸ ê°œì˜ ë‹¤ë¥¸ ì—´ì„ ì„¤ì •
+        // ¿­À» Àç¹è¿­ÇÏ°í ÇÃ¸³ÇÏ¿© ¼³Á¤
         yCol = yUnnormalized.normalized;
         xCol = Vector3.Cross(yCol, zUnnormalized.normalized).normalized;
         zCol = Vector3.Cross(xCol, yCol).normalized;
 
-        // ê°’ì„ ë§¤íŠ¸ë¦­ìŠ¤ë¡œ ë³µì‚¬í•˜ì‹­ì‹œì˜¤
+        // Çà·Ä¿¡ °ª º¹»ç
         PopulateMatrix(ref jointOrientation, xCol, yCol, zCol);
     }
-	
-	// ê³µë™ ìœ„ì¹˜ ë° ì¶”ì  ìƒíƒœì— ë”°ë¼ ê´€ì ˆ ë°©í–¥ì„ ê³„ì‚°í•©ë‹ˆë‹¤.
-    public static void GetSkeletonJointOrientation(ref Vector3[] jointsPos, ref bool[] jointsTracked, ref Matrix4x4 [] jointOrients)
+
+    /// <summary>
+    /// Á¶ÀÎÆ® À§Ä¡¿Í ÃßÀû »óÅÂ¿¡ µû¶ó Á¶ÀÎÆ® ¹æÇâÀ» °è»êÇÕ´Ï´Ù.
+    /// </summary>
+    /// <param name="jointsPos">Á¶ÀÎÆ® À§Ä¡ ¹è¿­</param>
+    /// <param name="jointsTracked">Á¶ÀÎÆ® ÃßÀû »óÅÂ ¹è¿­</param>
+    /// <param name="jointOrients">Á¶ÀÎÆ® ¹æÇâ ¹è¿­</param>
+    public static void GetSkeletonJointOrientation(ref Vector3[] jointsPos, ref bool[] jointsTracked, ref Matrix4x4[] jointOrients)
     {
         Vector3 vx;
         Vector3 vy;
         Vector3 vz;
 
-	    // nui_skeleton_position_hip_center
-		if(jointsTracked[(int)NuiSkeletonPositionIndex.HipCenter] && jointsTracked[(int)NuiSkeletonPositionIndex.Spine] &&
-			jointsTracked[(int)NuiSkeletonPositionIndex.HipLeft] && jointsTracked[(int)NuiSkeletonPositionIndex.HipRight])
-		{
-			vy = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.HipCenter, NuiSkeletonPositionIndex.Spine);
-	        vx = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.HipLeft, NuiSkeletonPositionIndex.HipRight);
-	        MakeMatrixFromYX(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.HipCenter]);
-			
-			// ì •ë©´ìœ¼ë¡œ ì•½ 40ë„ë¥¼ ìˆ˜ì •í•˜ì‹­ì‹œì˜¤.
-			Matrix4x4 mat = jointOrients[(int)NuiSkeletonPositionIndex.HipCenter];
-			Quaternion quat = Quaternion.LookRotation(mat.GetColumn(2), mat.GetColumn(1));
-			quat *= Quaternion.Euler(-40, 0, 0);
-			jointOrients[(int)NuiSkeletonPositionIndex.HipCenter].SetTRS(Vector3.zero, quat, Vector3.one);
-		}
-       
-		if(jointsTracked[(int)NuiSkeletonPositionIndex.ShoulderLeft] && jointsTracked[(int)NuiSkeletonPositionIndex.ShoulderRight])
-		{
-		    // nui_skeleton_position_spine
-			if(jointsTracked[(int)NuiSkeletonPositionIndex.Spine] && jointsTracked[(int)NuiSkeletonPositionIndex.ShoulderCenter])
-			{
-		        vy = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.Spine, NuiSkeletonPositionIndex.ShoulderCenter);
-		        vx = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.ShoulderLeft, NuiSkeletonPositionIndex.ShoulderRight);
-		        MakeMatrixFromYX(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.Spine]);
-			}
-	       
-			if(jointsTracked[(int)NuiSkeletonPositionIndex.ShoulderCenter] && jointsTracked[(int)NuiSkeletonPositionIndex.Head])
-			{
-			    // nui_skeleton_position_shoulder_center
-			    vy = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.ShoulderCenter, NuiSkeletonPositionIndex.Head);
-			    vx = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.ShoulderLeft, NuiSkeletonPositionIndex.ShoulderRight);
-			    MakeMatrixFromYX(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.ShoulderCenter]);
-		
-			    // nui_skeleton_position_head
-			    MakeMatrixFromYX(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.Head]);
-			}
-		}
-       
-		if(jointsTracked[(int)NuiSkeletonPositionIndex.ShoulderLeft] && jointsTracked[(int)NuiSkeletonPositionIndex.ElbowLeft] &&
-			jointsTracked[(int)NuiSkeletonPositionIndex.Spine] && jointsTracked[(int)NuiSkeletonPositionIndex.ShoulderCenter])
-		{
-		    // nui_skeleton_position_shoulder_left
-			{
-		        vx = -GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.ShoulderLeft, NuiSkeletonPositionIndex.ElbowLeft);
-				vy = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.Spine, NuiSkeletonPositionIndex.ShoulderCenter);
-		        MakeMatrixFromXY(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.ShoulderLeft]);
-			}
-	       
-		    // nui_skeleton_position_elbow_left
-			{
-		        vx = -GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.ElbowLeft, NuiSkeletonPositionIndex.WristLeft);
-				vy = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.Spine, NuiSkeletonPositionIndex.ShoulderCenter);
-		        MakeMatrixFromXY(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.ElbowLeft]);
-			}
-		}
-			
-       	if(jointsTracked[(int)NuiSkeletonPositionIndex.WristLeft] && jointsTracked[(int)NuiSkeletonPositionIndex.HandLeft] &&
-			jointsTracked[(int)NuiSkeletonPositionIndex.Spine] && jointsTracked[(int)NuiSkeletonPositionIndex.ShoulderCenter])
-		{
-		        vx = -GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.WristLeft, NuiSkeletonPositionIndex.HandLeft);
-				vy = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.Spine, NuiSkeletonPositionIndex.ShoulderCenter);
-		        MakeMatrixFromXY(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.WristLeft]);
-		        MakeMatrixFromXY(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.HandLeft]);
-		}
-       
-		if(jointsTracked[(int)NuiSkeletonPositionIndex.ShoulderRight] && jointsTracked[(int)NuiSkeletonPositionIndex.ElbowRight] &&
-			jointsTracked[(int)NuiSkeletonPositionIndex.Spine] && jointsTracked[(int)NuiSkeletonPositionIndex.ShoulderCenter])
-		{
-		    // nui_skeleton_position_shoulder_right
-			{
-		        vx = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.ShoulderRight, NuiSkeletonPositionIndex.ElbowRight);
-				vy = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.Spine, NuiSkeletonPositionIndex.ShoulderCenter);
-		        MakeMatrixFromXY(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.ShoulderRight]);
-			}
-	       
-		    // nui_skeleton_position_elbow_right
-			{
-		        vx = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.ElbowRight, NuiSkeletonPositionIndex.WristRight);
-				vy = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.Spine, NuiSkeletonPositionIndex.ShoulderCenter);
-		        MakeMatrixFromXY(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.ElbowRight]);
-			}
-		}
-       
-		if(jointsTracked[(int)NuiSkeletonPositionIndex.WristRight] && jointsTracked[(int)NuiSkeletonPositionIndex.HandRight] &&
-			jointsTracked[(int)NuiSkeletonPositionIndex.Spine] && jointsTracked[(int)NuiSkeletonPositionIndex.ShoulderCenter])
-		{
-		    // nui_skeleton_position_wrist_right
-		    vx = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.WristRight, NuiSkeletonPositionIndex.HandRight);
-			vy = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.Spine, NuiSkeletonPositionIndex.ShoulderCenter);
-		    MakeMatrixFromXY(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.WristRight]);
-	       
-		    // nui_skeleton_position_hand_right
-		    MakeMatrixFromXY(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.HandRight]);
-		}
-        
-	    // nui_skeleton_position_hip_left
-		if(jointsTracked[(int)NuiSkeletonPositionIndex.HipLeft] && jointsTracked[(int)NuiSkeletonPositionIndex.KneeLeft] &&
-			jointsTracked[(int)NuiSkeletonPositionIndex.HipRight])
-		{
-	        vy = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.KneeLeft, NuiSkeletonPositionIndex.HipLeft);
-	        vx = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.HipLeft, NuiSkeletonPositionIndex.HipRight);
-	        MakeMatrixFromYX(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.HipLeft]);
-       
-		    // nui_skeleton_position_knee_left
-			if(jointsTracked[(int)NuiSkeletonPositionIndex.AnkleLeft])
-			{
-		        vy = -GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.KneeLeft, NuiSkeletonPositionIndex.AnkleLeft);
-		        vx = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.HipLeft, NuiSkeletonPositionIndex.HipRight);
-		        MakeMatrixFromYX(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.KneeLeft]);
-			}
-		}
-		
-		if(jointsTracked[(int)NuiSkeletonPositionIndex.KneeLeft] && jointsTracked[(int)NuiSkeletonPositionIndex.AnkleLeft] &&
-			jointsTracked[(int)NuiSkeletonPositionIndex.FootLeft])
-		{
-		    vy = -GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.KneeLeft, NuiSkeletonPositionIndex.AnkleLeft);
-		    vz = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.FootLeft, NuiSkeletonPositionIndex.AnkleLeft);
-		    MakeMatrixFromYZ(vy, vz, ref jointOrients[(int)NuiSkeletonPositionIndex.AnkleLeft]);
-	       
-		    // nui_skeleton_position_foot_left
-		    MakeMatrixFromYZ(vy, vz, ref jointOrients[(int)NuiSkeletonPositionIndex.FootLeft]);
-		}
-       
-	    // nui_skeleton_position_hip_right
-		if(jointsTracked[(int)NuiSkeletonPositionIndex.HipRight] && jointsTracked[(int)NuiSkeletonPositionIndex.KneeRight] &&
-			jointsTracked[(int)NuiSkeletonPositionIndex.HipLeft])
-		{
-	        vy = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.KneeRight, NuiSkeletonPositionIndex.HipRight);
-	        vx = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.HipLeft, NuiSkeletonPositionIndex.HipRight);
-	        MakeMatrixFromYX(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.HipRight]);
+        // NUI_SKELETON_POSITION_HIP_CENTER
+        if (jointsTracked[(int)NuiSkeletonPositionIndex.HipCenter] && jointsTracked[(int)NuiSkeletonPositionIndex.Spine] &&
+            jointsTracked[(int)NuiSkeletonPositionIndex.HipLeft] && jointsTracked[(int)NuiSkeletonPositionIndex.HipRight])
+        {
+            vy = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.HipCenter, NuiSkeletonPositionIndex.Spine);
+            vx = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.HipLeft, NuiSkeletonPositionIndex.HipRight);
+            MakeMatrixFromYX(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.HipCenter]);
 
-		    // nui_skeleton_position_knee_right
-			if(jointsTracked[(int)NuiSkeletonPositionIndex.AnkleRight])
-			{
-		        vy = -GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.KneeRight, NuiSkeletonPositionIndex.AnkleRight);
-		        vx = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.HipLeft, NuiSkeletonPositionIndex.HipRight);
-		        MakeMatrixFromYX(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.KneeRight]);
-			}
-		}
-       
-		if(jointsTracked[(int)NuiSkeletonPositionIndex.KneeRight] && jointsTracked[(int)NuiSkeletonPositionIndex.AnkleRight] &&
-			jointsTracked[(int)NuiSkeletonPositionIndex.FootRight])
-		{
-		    // nui_skeleton_position_ankle_right
-		    vy = -GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.KneeRight, NuiSkeletonPositionIndex.AnkleRight);
-		    vz = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.FootRight, NuiSkeletonPositionIndex.AnkleRight);
-		    MakeMatrixFromYZ(vy, vz, ref jointOrients[(int)NuiSkeletonPositionIndex.AnkleRight]);
+            // ¾à 40µµ ¾ÕÂÊÀ¸·ÎÀÇ º¸Á¤
+            Matrix4x4 mat = jointOrients[(int)NuiSkeletonPositionIndex.HipCenter];
+            Quaternion quat = Quaternion.LookRotation(mat.GetColumn(2), mat.GetColumn(1));
+            quat *= Quaternion.Euler(-40, 0, 0);
+            jointOrients[(int)NuiSkeletonPositionIndex.HipCenter].SetTRS(Vector3.zero, quat, Vector3.one);
+        }
 
-		    // nui_skeleton_position_foot_right
-		    MakeMatrixFromYZ(vy, vz, ref jointOrients[(int)NuiSkeletonPositionIndex.FootRight]);
-		}
+        if (jointsTracked[(int)NuiSkeletonPositionIndex.ShoulderLeft] && jointsTracked[(int)NuiSkeletonPositionIndex.ShoulderRight])
+        {
+            // NUI_SKELETON_POSITION_SPINE
+            if (jointsTracked[(int)NuiSkeletonPositionIndex.Spine] && jointsTracked[(int)NuiSkeletonPositionIndex.ShoulderCenter])
+            {
+                vy = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.Spine, NuiSkeletonPositionIndex.ShoulderCenter);
+                vx = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.ShoulderLeft, NuiSkeletonPositionIndex.ShoulderRight);
+                MakeMatrixFromYX(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.Spine]);
+            }
+
+            if (jointsTracked[(int)NuiSkeletonPositionIndex.ShoulderCenter] && jointsTracked[(int)NuiSkeletonPositionIndex.Head])
+            {
+                // NUI_SKELETON_POSITION_SHOULDER_CENTER
+                vy = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.ShoulderCenter, NuiSkeletonPositionIndex.Head);
+                vx = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.ShoulderLeft, NuiSkeletonPositionIndex.ShoulderRight);
+                MakeMatrixFromYX(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.ShoulderCenter]);
+
+                // NUI_SKELETON_POSITION_HEAD
+                MakeMatrixFromYX(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.Head]);
+            }
+        }
+
+        if (jointsTracked[(int)NuiSkeletonPositionIndex.ShoulderLeft] && jointsTracked[(int)NuiSkeletonPositionIndex.ElbowLeft] &&
+            jointsTracked[(int)NuiSkeletonPositionIndex.Spine] && jointsTracked[(int)NuiSkeletonPositionIndex.ShoulderCenter])
+        {
+            // NUI_SKELETON_POSITION_SHOULDER_LEFT
+            {
+                vx = -GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.ShoulderLeft, NuiSkeletonPositionIndex.ElbowLeft);
+                vy = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.Spine, NuiSkeletonPositionIndex.ShoulderCenter);
+                MakeMatrixFromXY(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.ShoulderLeft]);
+            }
+
+            // NUI_SKELETON_POSITION_ELBOW_LEFT
+            {
+                vx = -GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.ElbowLeft, NuiSkeletonPositionIndex.WristLeft);
+                vy = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.Spine, NuiSkeletonPositionIndex.ShoulderCenter);
+                MakeMatrixFromXY(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.ElbowLeft]);
+            }
+        }
+
+        if (jointsTracked[(int)NuiSkeletonPositionIndex.WristLeft] && jointsTracked[(int)NuiSkeletonPositionIndex.HandLeft] &&
+         jointsTracked[(int)NuiSkeletonPositionIndex.Spine] && jointsTracked[(int)NuiSkeletonPositionIndex.ShoulderCenter])
+        {
+            vx = -GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.WristLeft, NuiSkeletonPositionIndex.HandLeft);
+            vy = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.Spine, NuiSkeletonPositionIndex.ShoulderCenter);
+            MakeMatrixFromXY(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.WristLeft]);
+            MakeMatrixFromXY(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.HandLeft]);
+        }
+
+        if (jointsTracked[(int)NuiSkeletonPositionIndex.ShoulderRight] && jointsTracked[(int)NuiSkeletonPositionIndex.ElbowRight] &&
+            jointsTracked[(int)NuiSkeletonPositionIndex.Spine] && jointsTracked[(int)NuiSkeletonPositionIndex.ShoulderCenter])
+        {
+            // NUI_SKELETON_POSITION_SHOULDER_RIGHT
+            {
+                vx = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.ShoulderRight, NuiSkeletonPositionIndex.ElbowRight);
+                vy = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.Spine, NuiSkeletonPositionIndex.ShoulderCenter);
+                MakeMatrixFromXY(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.ShoulderRight]);
+            }
+
+            // NUI_SKELETON_POSITION_ELBOW_RIGHT
+            {
+                vx = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.ElbowRight, NuiSkeletonPositionIndex.WristRight);
+                vy = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.Spine, NuiSkeletonPositionIndex.ShoulderCenter);
+                MakeMatrixFromXY(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.ElbowRight]);
+            }
+        }
+
+        if (jointsTracked[(int)NuiSkeletonPositionIndex.WristRight] && jointsTracked[(int)NuiSkeletonPositionIndex.HandRight] &&
+            jointsTracked[(int)NuiSkeletonPositionIndex.Spine] && jointsTracked[(int)NuiSkeletonPositionIndex.ShoulderCenter])
+        {
+            // NUI_SKELETON_POSITION_WRIST_RIGHT
+            vx = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.WristRight, NuiSkeletonPositionIndex.HandRight);
+            vy = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.Spine, NuiSkeletonPositionIndex.ShoulderCenter);
+            MakeMatrixFromXY(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.WristRight]);
+
+            // NUI_SKELETON_POSITION_HAND_RIGHT
+            MakeMatrixFromXY(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.HandRight]);
+        }
+
+        // NUI_SKELETON_POSITION_HIP_LEFT
+        if (jointsTracked[(int)NuiSkeletonPositionIndex.HipLeft] && jointsTracked[(int)NuiSkeletonPositionIndex.KneeLeft] &&
+            jointsTracked[(int)NuiSkeletonPositionIndex.HipRight])
+        {
+            vy = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.KneeLeft, NuiSkeletonPositionIndex.HipLeft);
+            vx = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.HipLeft, NuiSkeletonPositionIndex.HipRight);
+            MakeMatrixFromYX(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.HipLeft]);
+
+            // NUI_SKELETON_POSITION_KNEE_LEFT
+            if (jointsTracked[(int)NuiSkeletonPositionIndex.AnkleLeft])
+            {
+                vy = -GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.KneeLeft, NuiSkeletonPositionIndex.AnkleLeft);
+                vx = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.HipLeft, NuiSkeletonPositionIndex.HipRight);
+                MakeMatrixFromYX(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.KneeLeft]);
+            }
+        }
+
+        if (jointsTracked[(int)NuiSkeletonPositionIndex.KneeLeft] && jointsTracked[(int)NuiSkeletonPositionIndex.AnkleLeft] &&
+            jointsTracked[(int)NuiSkeletonPositionIndex.FootLeft])
+        {
+            // NUI_SKELETON_POSITION_ANKLE_LEFT
+            vy = -GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.KneeLeft, NuiSkeletonPositionIndex.AnkleLeft);
+            vz = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.FootLeft, NuiSkeletonPositionIndex.AnkleLeft);
+            MakeMatrixFromYZ(vy, vz, ref jointOrients[(int)NuiSkeletonPositionIndex.AnkleLeft]);
+
+            // NUI_SKELETON_POSITION_FOOT_LEFT
+            MakeMatrixFromYZ(vy, vz, ref jointOrients[(int)NuiSkeletonPositionIndex.FootLeft]);
+        }
+
+        // NUI_SKELETON_POSITION_HIP_RIGHT
+        if (jointsTracked[(int)NuiSkeletonPositionIndex.HipRight] && jointsTracked[(int)NuiSkeletonPositionIndex.KneeRight] &&
+            jointsTracked[(int)NuiSkeletonPositionIndex.HipLeft])
+        {
+            vy = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.KneeRight, NuiSkeletonPositionIndex.HipRight);
+            vx = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.HipLeft, NuiSkeletonPositionIndex.HipRight);
+            MakeMatrixFromYX(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.HipRight]);
+
+            // NUI_SKELETON_POSITION_KNEE_RIGHT
+            if (jointsTracked[(int)NuiSkeletonPositionIndex.AnkleRight])
+            {
+                vy = -GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.KneeRight, NuiSkeletonPositionIndex.AnkleRight);
+                vx = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.HipLeft, NuiSkeletonPositionIndex.HipRight);
+                MakeMatrixFromYX(vx, vy, ref jointOrients[(int)NuiSkeletonPositionIndex.KneeRight]);
+            }
+        }
+
+        if (jointsTracked[(int)NuiSkeletonPositionIndex.KneeRight] && jointsTracked[(int)NuiSkeletonPositionIndex.AnkleRight] &&
+            jointsTracked[(int)NuiSkeletonPositionIndex.FootRight])
+        {
+            // NUI_SKELETON_POSITION_ANKLE_RIGHT
+            vy = -GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.KneeRight, NuiSkeletonPositionIndex.AnkleRight);
+            vz = GetPositionBetweenIndices(ref jointsPos, NuiSkeletonPositionIndex.FootRight, NuiSkeletonPositionIndex.AnkleRight);
+            MakeMatrixFromYZ(vy, vz, ref jointOrients[(int)NuiSkeletonPositionIndex.AnkleRight]);
+
+            // NUI_SKELETON_POSITION_FOOT_RIGHT
+            MakeMatrixFromYZ(vy, vz, ref jointOrients[(int)NuiSkeletonPositionIndex.FootRight]);
+        }
     }
 }

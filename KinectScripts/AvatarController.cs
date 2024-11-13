@@ -5,495 +5,590 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.IO;
-using System.Text; 
+using System.Text;
 
-
-[RequireComponent(typeof(Animator))]
+/**
+ * <summary>
+ * AvatarController Å¬·¡½º´Â Kinect¸¦ »ç¿ëÇÏ¿© ¾Æ¹ÙÅ¸ÀÇ ¿òÁ÷ÀÓ°ú È¸ÀüÀ» Á¦¾îÇÕ´Ï´Ù.
+ * »ç¿ëÀÚÀÇ ½ºÄÌ·¹Åæ µ¥ÀÌÅÍ¿¡ ±â¹İÇÏ¿© ¾Æ¹ÙÅ¸ÀÇ °¢ »À¸¦ ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+ * </summary>
+ */
+[RequireComponent(typeof(Animator))] // Animator ÄÄÆ÷³ÍÆ®°¡ ÇÊ¿äÇÔÀ» ³ªÅ¸³»´Â Æ¯¼º
 public class AvatarController : MonoBehaviour
-{	
-	// ìºë¦­í„° (í”Œë ˆì´ì–´ë¥¼ í–¥í•œ) ì•¡ì…˜ì´ìˆëŠ” ë¶€ìš¸ì€ ë°˜ì˜ë©ë‹ˆë‹¤.
-    // ê¸°ë³¸ ê±°ì§“.
-	public bool mirroredMovement = false;
-	
-	// ì•„ë°”íƒ€ê°€ ìˆ˜ì§ ë°©í–¥ìœ¼ë¡œ ì›€ì§ì¼ ìˆ˜ ìˆëŠ”ì§€ ì—¬ë¶€ë¥¼ ê²°ì •í•˜ëŠ” bool.
-	public bool verticalMovement = false;
-	
-	// ì•„ë°”íƒ€ê°€ ì¥ë©´ì„ í†µí•´ ì´ë™í•˜ëŠ” ìš”ìœ¨.
-    // ì†ë„ëŠ” ì´ë™ ì†ë„ (.001f, ì¦‰ 1000, Unity 's Framerateë¡œ ë‚˜ëˆ„ê¸°)ë¥¼ ê³±í•©ë‹ˆë‹¤.
-	protected int moveRate = 1;
-	
-	// Slerp Smooth Factor
-	public float smoothFactor = 5f;
-	
-	// ì„¼ì„œì—ì„œë³´ê³  í•œëŒ€ë¡œ ì˜¤í”„ì…‹ ë…¸ë“œë¥¼ ì‚¬ìš©ìì˜ ì¢Œí‘œë¡œ ì¬ë°°ì¹˜ í•´ì•¼í•˜ëŠ”ì§€ ì—¬ë¶€.
-	public bool offsetRelativeToSensor = false;
-	
+{
+    /*
+    ÁÖ¿ä ±¸¼º ¿ä¼Ò
+        º¯¼ö:
+            mirroredMovement: ¾Æ¹ÙÅ¸ÀÇ ¿òÁ÷ÀÓÀ» ¹İÀüÇÒÁö ¿©ºÎ¸¦ ¼³Á¤ÇÏ´Â ºÒ¸®¾ğ º¯¼öÀÔ´Ï´Ù.
+            verticalMovement: ¾Æ¹ÙÅ¸ÀÇ ¼öÁ÷ ÀÌµ¿À» Çã¿ëÇÒÁö ¿©ºÎ¸¦ °áÁ¤ÇÏ´Â º¯¼öÀÔ´Ï´Ù.
+            moveRate: ¾Æ¹ÙÅ¸ÀÇ ÀÌµ¿ ¼Óµµ¸¦ ¼³Á¤ÇÏ´Â º¯¼öÀÔ´Ï´Ù.
+            smoothFactor: ¾Æ¹ÙÅ¸ÀÇ ¿òÁ÷ÀÓÀ» ºÎµå·´°Ô ÇÏ±â À§ÇÑ º¸°£ °è¼öÀÔ´Ï´Ù.
+            bones: ¾Æ¹ÙÅ¸ÀÇ »À¸¦ ÀúÀåÇÏ´Â ¹è¿­ÀÔ´Ï´Ù.
+            initialRotations: Kinect ÃßÀû ½ÃÀÛ ½Ã °¢ »ÀÀÇ ÃÊ±â È¸ÀüÀ» ÀúÀåÇÏ´Â ¹è¿­ÀÔ´Ï´Ù.
 
-	// ë°”ë”” ë£¨íŠ¸ ë…¸ë“œ
-	protected Transform bodyRoot;
-	
-	// ê³µê°„ì—ì„œ ëª¨ë¸ì„ íšŒì „í•˜ë ¤ëŠ” ê²½ìš° í•„ìš”í•œ ë³€ìˆ˜ì…ë‹ˆë‹¤.
-	protected GameObject offsetNode;
-	
-	// ëª¨ë“  ë¼ˆë¥¼ ì¡ì„ ìˆ˜ìˆëŠ” ê°€ë³€.
-    // ì´ˆê¸° ë°©í–¥ê³¼ ë™ì¼í•œ í¬ê¸°ë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
-	protected Transform[] bones;
-	
-	// Kinect ì¶”ì ì´ ì‹œì‘ë  ë•Œ ë¼ˆì˜ íšŒì „.
-	protected Quaternion[] initialRotations;
-	protected Quaternion[] initialLocalRotations;
-	
-	// ë³€í™˜ì˜ ì´ˆê¸° ìœ„ì¹˜ ë° íšŒì „
-	protected Vector3 initialPosition;
-	protected Quaternion initialRotation;
-	
-	// ë¬¸ì ìœ„ì¹˜ì— ëŒ€í•œ êµì • ì˜¤í”„ì…‹ ë³€ìˆ˜.
-	protected bool offsetCalibrated = false;
-	protected float xOffset, yOffset, zOffset;
+        ¸Ş¼Òµå:
+            Awake(): ¾Æ¹ÙÅ¸ÀÇ ÃÊ±â ¼³Á¤À» ¼öÇàÇÏ°í, »À¸¦ ¸ÅÇÎÇÑ ÈÄ ÃÊ±â È¸ÀüÀ» °¡Á®¿É´Ï´Ù.
+            UpdateAvatar(uint UserID): ¸Å ÇÁ·¹ÀÓ¸¶´Ù ¾Æ¹ÙÅ¸¸¦ ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+                »ç¿ëÀÚÀÇ ½ºÄÌ·¹Åæ µ¥ÀÌÅÍ¿¡ µû¶ó ¾Æ¹ÙÅ¸ÀÇ À§Ä¡¿Í È¸ÀüÀ» Á¶Á¤ÇÕ´Ï´Ù.
+            ResetToInitialPosition(): ¾Æ¹ÙÅ¸ÀÇ »À¸¦ ÃÊ±â À§Ä¡¿Í È¸ÀüÀ¸·Î ¸®¼ÂÇÕ´Ï´Ù.
+            SuccessfulCalibration(uint userId):
+                »ç¿ëÀÚ°¡ ¼º°øÀûÀ¸·Î º¸Á¤µÇ¾úÀ» ¶§ È£ÃâµÇ¾î ¾Æ¹ÙÅ¸ÀÇ À§Ä¡¸¦ ¸®¼ÂÇÏ°í ¿ÀÇÁ¼ÂÀ» Àçº¸Á¤ÇÕ´Ï´Ù.
+            TransformBone(...): Kinect¿¡¼­ ÃßÀûµÈ °üÀı È¸ÀüÀ» ¾Æ¹ÙÅ¸ÀÇ »À¿¡ Àû¿ëÇÕ´Ï´Ù.
+            TransformSpecialBone(...): Æ¯¼ö °üÀı¿¡ ´ëÇÑ È¸ÀüÀ» Àû¿ëÇÕ´Ï´Ù.
+            MoveAvatar(uint UserID): ¾Æ¹ÙÅ¸¸¦ 3D °ø°£¿¡¼­ ÀÌµ¿½ÃÅ°¸ç,
+                »ç¿ëÀÚÀÇ Ã´Ãß À§Ä¡¸¦ ±â¹İÀ¸·Î ·çÆ®¸¦ ÀÌµ¿ÇÕ´Ï´Ù.
+            MapBones(): ¾Æ¹ÙÅ¸ÀÇ »À¸¦ Kinect °üÀı¿¡ ¸ÅÇÎÇÏ´Â ±â´ÉÀ» ¼öÇàÇÕ´Ï´Ù.
+            GetInitialRotations(): »ÀÀÇ ÃÊ±â È¸ÀüÀ» Ä¸Ã³ÇÕ´Ï´Ù.
+            Kinect2AvatarRot(...): Kinect °üÀı È¸ÀüÀ» ¾Æ¹ÙÅ¸ °üÀı È¸ÀüÀ¸·Î º¯È¯ÇÕ´Ï´Ù.
+            Kinect2AvatarPos(...): Kinect À§Ä¡¸¦ ¾Æ¹ÙÅ¸ ½ºÄÌ·¹Åæ À§Ä¡·Î º¯È¯ÇÕ´Ï´Ù.
+    ±â´É ¿ä¾à
+        ¾Æ¹ÙÅ¸ Á¦¾î: Kinect ¼¾¼­¿¡¼­ ¾òÀº ½ºÄÌ·¹Åæ µ¥ÀÌÅÍ¸¦ ±â¹İÀ¸·Î ¾Æ¹ÙÅ¸ÀÇ »À¸¦ ¾÷µ¥ÀÌÆ®ÇÏ¿© ½ÇÁ¦ »ç¿ëÀÚÀÇ ¿òÁ÷ÀÓÀ» ¾Æ¹ÙÅ¸¿¡ ¹İ¿µÇÕ´Ï´Ù.
+        ÃÊ±âÈ­ ¹× ¸®¼Â: ¾Æ¹ÙÅ¸ÀÇ ÃÊ±â È¸ÀüÀ» ÀúÀåÇÏ°í ÇÊ¿ä¿¡ µû¶ó ÃÊ±â »óÅÂ·Î ¸®¼ÂÇÏ´Â ±â´ÉÀ» Á¦°øÇÕ´Ï´Ù.
+        º¸Á¤ Ã³¸®: »ç¿ëÀÚ°¡ ¼º°øÀûÀ¸·Î º¸Á¤µÇ¾úÀ» ¶§ ¾Æ¹ÙÅ¸ÀÇ À§Ä¡¸¦ Á¶Á¤ÇÏ°í, ¹İÀüµÈ ¿òÁ÷ÀÓÀ» Ã³¸®ÇÒ ¼ö ÀÖ½À´Ï´Ù.
+        ºÎµå·¯¿î ÀÌµ¿: ¾Æ¹ÙÅ¸ÀÇ ¿òÁ÷ÀÓÀ» ºÎµå·´°Ô Ã³¸®ÇÏ±â À§ÇÑ º¸°£ ±â´ÉÀ» Á¦°øÇÕ´Ï´Ù.
 
-	// Kinectmanagerì˜ ê°œì¸ ì¸ìŠ¤í„´ìŠ¤
-	protected KinectManager kinectManager;
+    ÀÌ Å¬·¡½º´Â Kinect¸¦ È°¿ëÇÑ »óÈ£ÀÛ¿ëÇü ¾ÖÇÃ¸®ÄÉÀÌ¼Ç¿¡¼­ ¾Æ¹ÙÅ¸ ¾Ö´Ï¸ŞÀÌ¼ÇÀ» ±¸ÇöÇÏ´Â µ¥ ÇÙ½ÉÀûÀÎ ¿ªÇÒÀ» ÇÏ¸ç,
+    »ç¿ëÀÚÀÇ ½ºÄÌ·¹Åæ µ¥ÀÌÅÍ¸¦ È¿°úÀûÀ¸·Î Ã³¸®ÇÏ¿© ÀÚ¿¬½º·¯¿î ¾Æ¹ÙÅ¸ ¿òÁ÷ÀÓÀ» Á¦°øÇÕ´Ï´Ù.
+    */
 
+    // Ä³¸¯ÅÍÀÇ Çàµ¿À» °Å¿ï¿¡ ºñÄ£ °ÍÃ³·³ ¹İÀüÇÒÁö ¿©ºÎ
+    public bool mirroredMovement = false;
 
-	// Transform Cachingì€ Unity í˜¸ì¶œ GetComponent <Fransform> () ì´ë¼ê¸° ë•Œë¬¸ì— ì„±ëŠ¥ í–¥ìƒì„ ì œê³µí•©ë‹ˆë‹¤. 
-	private Transform _transformCache;
-	public new Transform transform
-	{
-		get
-		{
-			if (!_transformCache) 
-				_transformCache = base.transform;
-			
-			return _transformCache;
-		}
-	}
-	
-	public void Awake()
-    {	
-		// ë”ë¸” ì‹œì‘ì„ í™•ì¸í•˜ì‹­ì‹œì˜¤
-		if(bones != null)
-			return;
-		
-		// ë¼ˆ ì–´ë ˆì´ë¥¼ ì…ë ¥í•©ë‹ˆë‹¤
-		bones = new Transform[22];
-		
-		// ë¼ˆì˜ ì´ˆê¸° íšŒì „ ë° ë°©í–¥.
-		initialRotations = new Quaternion[bones.Length];
-		initialLocalRotations = new Quaternion[bones.Length];
+    // ¾Æ¹ÙÅ¸ÀÇ ¼öÁ÷ ÀÌµ¿ Çã¿ë ¿©ºÎ
+    public bool verticalMovement = false;
 
-		// Kinect íŠ¸ë™ì˜ ì§€ì ì— ë¼ˆë¥¼ ë§µí•‘í•˜ì‹­ì‹œì˜¤
-		MapBones();
+    // ¾Æ¹ÙÅ¸°¡ ¾ÀÀ» ÀÌµ¿ÇÏ´Â ¼Óµµ ºñÀ²
+    protected int moveRate = 1; // 1 = ±âº» ¼Óµµ
 
-		// ì´ˆê¸° ë¼ˆ íšŒì „ì„ ì–»ìœ¼ì‹­ì‹œì˜¤
-		GetInitialRotations();
-	}
-	
-	// ê° í”„ë ˆì„ ê° í”„ë ˆì„ì„ ì—…ë°ì´íŠ¸í•˜ì‹­ì‹œì˜¤.
-    public void UpdateAvatar(uint UserID)
-    {	
-		if(!transform.gameObject.activeInHierarchy) 
-			return;
-		
-		// Kinectmanager ì¸ìŠ¤í„´ìŠ¤ë¥¼ ì–»ìœ¼ì‹­ì‹œì˜¤
-		if(kinectManager == null)
-		{
-			kinectManager = KinectManager.Instance;
-		}
-		
-		// ì•„ë°”íƒ€ë¥¼ Kinect ìœ„ì¹˜ë¡œ ì´ë™í•˜ì‹­ì‹œì˜¤
-		MoveAvatar(UserID);
+    // ½º¹«µùÀ» À§ÇÑ º¸°£ °è¼ö
+    public float smoothFactor = 5f;
 
-		for (var boneIndex = 0; boneIndex < bones.Length; boneIndex++)
-		{
-			if (!bones[boneIndex]) 
-				continue;
-			
-			if(boneIndex2JointMap.ContainsKey(boneIndex))
-			{
-				KinectWrapper.NuiSkeletonPositionIndex joint = !mirroredMovement ? boneIndex2JointMap[boneIndex] : boneIndex2MirrorJointMap[boneIndex];
-				TransformBone(UserID, joint, boneIndex, !mirroredMovement);
-			}
-			else if(specIndex2JointMap.ContainsKey(boneIndex))
-			{
-				// íŠ¹ìˆ˜ ë¼ˆ (clavicles)
-				List<KinectWrapper.NuiSkeletonPositionIndex> alJoints = !mirroredMovement ? specIndex2JointMap[boneIndex] : specIndex2MirrorJointMap[boneIndex];
-				
-			}
-		}
-	}
-	
-	// ë¼ˆë¥¼ ì´ˆê¸° ìœ„ì¹˜ì™€ íšŒì „ìœ¼ë¡œ ì„¤ì •í•˜ì‹­ì‹œì˜¤
-	public void ResetToInitialPosition()
-	{	
-		if(bones == null)
-			return;
-		
-		if(offsetNode != null)
-		{
-			offsetNode.transform.rotation = Quaternion.identity;
-		}
-		else
-		{
-			transform.rotation = Quaternion.identity;
-		}
-		
-		// ì •ì˜ ëœ ê° ë¼ˆì— ëŒ€í•´ ì´ˆê¸° ìœ„ì¹˜ë¡œ ì¬ì„¤ì •í•˜ì‹­ì‹œì˜¤.
-		for (int i = 0; i < bones.Length; i++)
-		{
-			if (bones[i] != null)
-			{
-				bones[i].rotation = initialRotations[i];
-			}
-		}
-		
-		if(bodyRoot != null)
-		{
-			bodyRoot.localPosition = Vector3.zero;
-			bodyRoot.localRotation = Quaternion.identity;
-		}
-		
-		// ì˜¤í”„ì…‹ì˜ ìœ„ì¹˜ì™€ íšŒì „ì„ ë³µì›í•˜ì‹­ì‹œì˜¤
-		if(offsetNode != null)
-		{
-			offsetNode.transform.position = initialPosition;
-			offsetNode.transform.rotation = initialRotation;
-		}
-		else
-		{
-			transform.position = initialPosition;
-			transform.rotation = initialRotation;
-		}
-	}
-	
-	// í”Œë ˆì´ì–´ì˜ ì„±ê³µì ì¸ ë³´ì •ìœ¼ë¡œ í˜¸ì¶œë˜ì—ˆìŠµë‹ˆë‹¤.
-	public void SuccessfulCalibration(uint userId)
-	{
-		// ëª¨ë¸ ìœ„ì¹˜ë¥¼ ì¬ì„¤ì •í•˜ì‹­ì‹œì˜¤
-		if(offsetNode != null)
-		{
-			offsetNode.transform.rotation = initialRotation;
-		}
-		
-		// ìœ„ì¹˜ ì˜¤í”„ì…‹ì„ ë‹¤ì‹œ êµì •í•˜ì‹­ì‹œì˜¤
-		offsetCalibrated = false;
-	}
-	
-	// Kinectê°€ ì¶”ì  í•œ íšŒì „ì„ ì¡°ì¸íŠ¸ì— ì ìš©í•˜ì‹­ì‹œì˜¤.
-	protected void TransformBone(uint userId, KinectWrapper.NuiSkeletonPositionIndex joint, int boneIndex, bool flip)
+    // ¿ÀÇÁ¼Â ³ëµå¸¦ »ç¿ëÇÏ¿© »ç¿ëÀÚÀÇ ÁÂÇ¥¿¡ »ó´ëÀûÀ¸·Î À§Ä¡¸¦ Á¶Á¤ÇÒÁö ¿©ºÎ
+    public bool offsetRelativeToSensor = false;
+
+    // º»Ã¼ ·çÆ® ³ëµå
+    protected Transform bodyRoot;
+
+    // ¾Æ¹ÙÅ¸°¡ È¸ÀüÇÒ ¼ö ÀÖµµ·Ï ÇÏ´Â º¯¼ö
+    protected GameObject offsetNode;
+
+    // ¸ğµç »À¸¦ ÀúÀåÇÏ´Â º¯¼ö (ÃÊ±â È¸Àü Å©±â¸¸Å­ ÃÊ±âÈ­µÊ)
+    protected Transform[] bones;
+
+    // Kinect ÃßÀû ½ÃÀÛ ½Ã »ÀÀÇ ÃÊ±â È¸Àü
+    protected Quaternion[] initialRotations;
+    protected Quaternion[] initialLocalRotations;
+
+    // º¯È¯ÀÇ ÃÊ±â À§Ä¡¿Í È¸Àü
+    protected Vector3 initialPosition;
+    protected Quaternion initialRotation;
+
+    // Ä³¸¯ÅÍ À§Ä¡ º¸Á¤ ¿ÀÇÁ¼Â º¯¼ö
+    protected bool offsetCalibrated = false;
+    protected float xOffset, yOffset, zOffset;
+
+    // KinectManagerÀÇ ºñ°ø½Ä ÀÎ½ºÅÏ½º
+    protected KinectManager kinectManager;
+
+    // Transform Ä³½ÌÀ» ÅëÇØ ¼º´É Çâ»ó
+    private Transform _transformCache;
+    public new Transform transform
     {
-		Transform boneTransform = bones[boneIndex];
-		if(boneTransform == null || kinectManager == null)
-			return;
-		
-		int iJoint = (int)joint;
-		if(iJoint < 0)
-			return;
-		
-		// Kinect ê³µë™ ë°©í–¥ì„ ì–»ìœ¼ì‹­ì‹œì˜¤
-		Quaternion jointRotation = kinectManager.GetJointOrientation(userId, iJoint, flip);
-		if(jointRotation == Quaternion.identity)
-			return;
-		
-		// ìƒˆ íšŒì „ìœ¼ë¡œ ì›í™œí•˜ê²Œ ì „í™˜
-		Quaternion newRotation = Kinect2AvatarRot(jointRotation, boneIndex);
-		
-		if(smoothFactor != 0f)
-        	boneTransform.rotation = Quaternion.Slerp(boneTransform.rotation, newRotation, smoothFactor * Time.deltaTime);
-		else
-			boneTransform.rotation = newRotation;
-	}
-	
-	// Kinectê°€ ì¶”ì  í•œ íšŒì „ì„ íŠ¹ìˆ˜ ì¡°ì¸íŠ¸ì— ì ìš©í•˜ì‹­ì‹œì˜¤.
-	protected void TransformSpecialBone(uint userId, KinectWrapper.NuiSkeletonPositionIndex joint, KinectWrapper.NuiSkeletonPositionIndex jointParent, int boneIndex, Vector3 baseDir, bool flip)
-	{
-		Transform boneTransform = bones[boneIndex];
-		if(boneTransform == null || kinectManager == null)
-			return;
-		
-		if(!kinectManager.IsJointTracked(userId, (int)joint) || 
-		   !kinectManager.IsJointTracked(userId, (int)jointParent))
-		{
-			return;
-		}
-		
-		Vector3 jointDir = kinectManager.GetDirectionBetweenJoints(userId, (int)jointParent, (int)joint, false, true);
-		Quaternion jointRotation = jointDir != Vector3.zero ? Quaternion.FromToRotation(baseDir, jointDir) : Quaternion.identity;
-		
-		
-		if(jointRotation != Quaternion.identity)
-		{
-			// ìƒˆ íšŒì „ìœ¼ë¡œ ì›í™œí•˜ê²Œ ì „í™˜
-			Quaternion newRotation = Kinect2AvatarRot(jointRotation, boneIndex);
-			
-			if(smoothFactor != 0f)
-				boneTransform.rotation = Quaternion.Slerp(boneTransform.rotation, newRotation, smoothFactor * Time.deltaTime);
-			else
-				boneTransform.rotation = newRotation;
-		}
-		
-	}
-	
-	// ì•„ë°”íƒ€ë¥¼ 3D ê³µê°„ìœ¼ë¡œ ì´ë™ - ì²™ì¶”ì˜ ì¶”ì  ìœ„ì¹˜ë¥¼ ë‹¹ê²¨ ë¿Œë¦¬ì— ì ìš©í•©ë‹ˆë‹¤.
-	// íšŒì „ì´ ì•„ë‹Œ ìœ„ì¹˜ ë§Œ ê°€ì ¸ì˜µë‹ˆë‹¤.
-	protected void MoveAvatar(uint UserID)
-	{
-		if(bodyRoot == null || kinectManager == null)
-			return;
-		if(!kinectManager.IsJointTracked(UserID, (int)KinectWrapper.NuiSkeletonPositionIndex.HipCenter))
-			return;
-		
-        // ëª¸ì˜ ìœ„ì¹˜ë¥¼ ì–»ê³  ë³´ê´€í•˜ì‹­ì‹œì˜¤.
-		Vector3 trans = kinectManager.GetUserPosition(UserID);
-		
-		// ìš°ë¦¬ê°€ ì•„ë°”íƒ€ë¥¼ ì²˜ìŒìœ¼ë¡œ ì›€ì§ì´ëŠ” ê²½ìš° ì˜¤í”„ì…‹ì„ ì„¤ì •í•˜ì‹­ì‹œì˜¤.
-        // ê·¸ë ‡ì§€ ì•Šìœ¼ë©´ ê·¸ê²ƒì„ ë¬´ì‹œí•˜ì‹­ì‹œì˜¤.
-		if (!offsetCalibrated)
-		{
-			offsetCalibrated = true;
-			
-			xOffset = !mirroredMovement ? trans.x * moveRate : -trans.x * moveRate;
-			yOffset = trans.y * moveRate;
-			zOffset = -trans.z * moveRate;
-			
-			if(offsetRelativeToSensor)
-			{
-				Vector3 cameraPos = Camera.main.transform.position;
-				
-				float yRelToAvatar = (offsetNode != null ? offsetNode.transform.position.y : transform.position.y) - cameraPos.y;
-				Vector3 relativePos = new Vector3(trans.x * moveRate, yRelToAvatar, trans.z * moveRate);
-				Vector3 offsetPos = cameraPos + relativePos;
-				
-				if(offsetNode != null)
-				{
-					offsetNode.transform.position = offsetPos;
-				}
-				else
-				{
-					transform.position = offsetPos;
-				}
-			}
-		}
-	
-		// ìƒˆ ìœ„ì¹˜ë¡œ ë¶€ë“œëŸ½ê²Œ ì „í™˜í•©ë‹ˆë‹¤
-		Vector3 targetPos = Kinect2AvatarPos(trans, verticalMovement);
+        get
+        {
+            if (!_transformCache)
+                _transformCache = base.transform;
 
-		if(smoothFactor != 0f)
-			bodyRoot.localPosition = Vector3.Lerp(bodyRoot.localPosition, targetPos, smoothFactor * Time.deltaTime);
-		else
-			bodyRoot.localPosition = targetPos;
-	}
-	
-	// ë§¤í•‘ ë  ë¼ˆê°€ ì„ ì–¸ ëœ ê²½ìš° í•´ë‹¹ ë¼ˆë¥¼ ëª¨ë¸ì— ë§¤í•‘í•˜ì‹­ì‹œì˜¤.
-	protected virtual void MapBones()
-	{
-		// Model Transformì˜ ë¶€ëª¨ë¡œ ì˜¤í”„ì…‹ ë…¸ë“œë¥¼ ë§Œë“­ë‹ˆë‹¤.
-		offsetNode = new GameObject(name + "Ctrl") { layer = transform.gameObject.layer, tag = transform.gameObject.tag };
-		offsetNode.transform.position = transform.position;
-		offsetNode.transform.rotation = transform.rotation;
-		offsetNode.transform.parent = transform.parent;
-		
-		transform.parent = offsetNode.transform;
-		transform.localPosition = Vector3.zero;
-		transform.localRotation = Quaternion.identity;
-		
-		// ëª¨ë¸ ë³€í™˜ì„ ë°”ë”” ë£¨íŠ¸ë¡œ ì‚¬ìš©í•˜ì‹­ì‹œì˜¤
-		bodyRoot = transform;
-		
-		// ì• ë‹ˆë©”ì´í„° êµ¬ì„± ìš”ì†Œì—ì„œ ë¼ˆ ë³€í™˜ì„ ì–»ìŠµë‹ˆë‹¤
-		var animatorComponent = GetComponent<Animator>();
-		
-		for (int boneIndex = 0; boneIndex < bones.Length; boneIndex++)
-		{
-			if (!boneIndex2MecanimMap.ContainsKey(boneIndex)) 
-				continue;
-			
-			bones[boneIndex] = animatorComponent.GetBoneTransform(boneIndex2MecanimMap[boneIndex]);
-		}
-	}
-	
-	// ë¼ˆì˜ ì´ˆê¸° íšŒì „ì„ í¬ì°©í•˜ì‹­ì‹œì˜¤
-	protected void GetInitialRotations()
-	{
-		// ì´ˆê¸° íšŒì „ì„ ì €ì¥í•˜ì‹­ì‹œì˜¤
-		if(offsetNode != null)
-		{
-			initialPosition = offsetNode.transform.position;
-			initialRotation = offsetNode.transform.rotation;
-			
-			offsetNode.transform.rotation = Quaternion.identity;
-		}
-		else
-		{
-			initialPosition = transform.position;
-			initialRotation = transform.rotation;
-			
-			transform.rotation = Quaternion.identity;
-		}
-		
-		for (int i = 0; i < bones.Length; i++)
-		{
-			if (bones[i] != null)
-			{
-				initialRotations[i] = bones[i].rotation; // * Quaternion.Inverse(initialRotation);
-				initialLocalRotations[i] = bones[i].localRotation;
-			}
-		}
-		
-		// ì´ˆê¸° íšŒì „ì„ ë³µì›í•˜ì‹­ì‹œì˜¤
-		if(offsetNode != null)
-		{
-			offsetNode.transform.rotation = initialRotation;
-		}
-		else
-		{
-			transform.rotation = initialRotation;
-		}
-	}
-	
-	// ì¡°ì¸íŠ¸ ì´ˆê¸° íšŒì „ ë° ì˜¤í”„ì…‹ íšŒì „ì— ë”°ë¼ Kinect ê´€ì ˆ íšŒì „ì„ ì•„ë°”íƒ€ ì¡°ì¸íŠ¸ íšŒì „ìœ¼ë¡œ ë³€í™˜í•©ë‹ˆë‹¤.
-	protected Quaternion Kinect2AvatarRot(Quaternion jointRotation, int boneIndex)
-	{
-		// ìƒˆ íšŒì „ì„ ì ìš©í•˜ì‹­ì‹œì˜¤.
+            return _transformCache;
+        }
+    }
+
+    // Awake() ¸Ş¼Òµå: ÃÊ±â ¼³Á¤
+    /// <summary>
+    /// Awake ¸Ş¼Òµå´Â ¾Æ¹ÙÅ¸ÀÇ ÃÊ±â ¼³Á¤À» ¼öÇàÇÕ´Ï´Ù.
+    /// »À¸¦ ¸ÅÇÎÇÏ°í ÃÊ±â È¸ÀüÀ» °¡Á®¿É´Ï´Ù.
+    /// </summary>
+    public void Awake()
+    {
+        // ÀÌÁß ½ÃÀÛ ¹æÁö
+        if (bones != null)
+            return;
+
+        // »À ¹è¿­ ÃÊ±âÈ­
+        bones = new Transform[22];
+
+        // »ÀÀÇ ÃÊ±â È¸Àü°ú ¹æÇâ ÃÊ±âÈ­
+        initialRotations = new Quaternion[bones.Length];
+        initialLocalRotations = new Quaternion[bones.Length];
+
+        // »À¸¦ Kinect°¡ ÃßÀûÇÏ´Â Æ÷ÀÎÆ®¿¡ ¸ÅÇÎ
+        MapBones();
+
+        // ÃÊ±â »À È¸Àü °¡Á®¿À±â
+        GetInitialRotations();
+    }
+
+    // ¸Å ÇÁ·¹ÀÓ¸¶´Ù ¾Æ¹ÙÅ¸ ¾÷µ¥ÀÌÆ®
+    /// <summary>
+    /// UpdateAvatar ¸Ş¼Òµå´Â ¸Å ÇÁ·¹ÀÓ¸¶´Ù ¾Æ¹ÙÅ¸¸¦ ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+    /// »ç¿ëÀÚÀÇ ½ºÄÌ·¹Åæ µ¥ÀÌÅÍ¿¡ µû¶ó ¾Æ¹ÙÅ¸ÀÇ À§Ä¡¿Í È¸ÀüÀ» Á¶Á¤ÇÕ´Ï´Ù.
+    /// </summary>
+    /// <param name="UserID">¾÷µ¥ÀÌÆ®ÇÒ »ç¿ëÀÚ ID</param>
+    public void UpdateAvatar(uint UserID)
+    {
+        if (!transform.gameObject.activeInHierarchy)
+            return; // ¾Æ¹ÙÅ¸°¡ ºñÈ°¼ºÈ­µÈ °æ¿ì Á¾·á
+
+        // KinectManager ÀÎ½ºÅÏ½º °¡Á®¿À±â
+        if (kinectManager == null)
+        {
+            kinectManager = KinectManager.Instance;
+        }
+
+        // ¾Æ¹ÙÅ¸¸¦ Kinect À§Ä¡·Î ÀÌµ¿
+        MoveAvatar(UserID);
+
+        // °¢ »À¿¡ ´ëÇØ È¸Àü Àû¿ë
+        for (var boneIndex = 0; boneIndex < bones.Length; boneIndex++)
+        {
+            if (!bones[boneIndex])
+                continue; // »À°¡ Á¸ÀçÇÏÁö ¾ÊÀ¸¸é °Ç³Ê¶Ü
+
+            if (boneIndex2JointMap.ContainsKey(boneIndex))
+            {
+                KinectWrapper.NuiSkeletonPositionIndex joint = !mirroredMovement ? boneIndex2JointMap[boneIndex] : boneIndex2MirrorJointMap[boneIndex];
+                TransformBone(UserID, joint, boneIndex, !mirroredMovement);
+            }
+            else if (specIndex2JointMap.ContainsKey(boneIndex))
+            {
+                // Æ¯¼ö »À (¼â°ñ µî)
+                List<KinectWrapper.NuiSkeletonPositionIndex> alJoints = !mirroredMovement ? specIndex2JointMap[boneIndex] : specIndex2MirrorJointMap[boneIndex];
+
+                if (alJoints.Count >= 2)
+                {
+                    // Æ¯¼ö »À¿¡ ´ëÇÑ º¯È¯ Ã³¸®
+                    //Vector3 baseDir = alJoints[0].ToString().EndsWith("Left") ? Vector3.left : Vector3.right;
+                    //TransformSpecialBone(UserID, alJoints[0], alJoints[1], boneIndex, baseDir, !mirroredMovement);
+                }
+            }
+        }
+    }
+
+    // »À¸¦ ÃÊ±â À§Ä¡¿Í È¸ÀüÀ¸·Î ¸®¼Â
+    /// <summary>
+    /// ResetToInitialPosition ¸Ş¼Òµå´Â ¾Æ¹ÙÅ¸ÀÇ »À¸¦ ÃÊ±â À§Ä¡¿Í È¸ÀüÀ¸·Î ¸®¼ÂÇÕ´Ï´Ù.
+    /// </summary>
+    public void ResetToInitialPosition()
+    {
+        if (bones == null)
+            return;
+
+        // ¿ÀÇÁ¼Â ³ëµåÀÇ È¸Àü ÃÊ±âÈ­
+        if (offsetNode != null)
+        {
+            offsetNode.transform.rotation = Quaternion.identity;
+        }
+        else
+        {
+            transform.rotation = Quaternion.identity;
+        }
+
+        // °¢ Á¤ÀÇµÈ »À¸¦ ÃÊ±â À§Ä¡·Î ¸®¼Â
+        for (int i = 0; i < bones.Length; i++)
+        {
+            if (bones[i] != null)
+            {
+                bones[i].rotation = initialRotations[i];
+            }
+        }
+
+        // º»Ã¼ ·çÆ® ÃÊ±âÈ­
+        if (bodyRoot != null)
+        {
+            bodyRoot.localPosition = Vector3.zero;
+            bodyRoot.localRotation = Quaternion.identity;
+        }
+
+        // ÃÊ±â À§Ä¡¿Í È¸Àü º¹¿ø
+        if (offsetNode != null)
+        {
+            offsetNode.transform.position = initialPosition;
+            offsetNode.transform.rotation = initialRotation;
+        }
+        else
+        {
+            transform.position = initialPosition;
+            transform.rotation = initialRotation;
+        }
+    }
+
+    // »ç¿ëÀÚ°¡ ¼º°øÀûÀ¸·Î º¸Á¤µÇ¾úÀ» ¶§ È£Ãâ
+    /// <summary>
+    /// SuccessfulCalibration ¸Ş¼Òµå´Â »ç¿ëÀÚ°¡ ¼º°øÀûÀ¸·Î º¸Á¤µÇ¾úÀ» ¶§ È£ÃâµË´Ï´Ù.
+    /// ¾Æ¹ÙÅ¸ÀÇ À§Ä¡¸¦ ¸®¼ÂÇÏ°í ¿ÀÇÁ¼ÂÀ» Àçº¸Á¤ÇÕ´Ï´Ù.
+    /// </summary>
+    /// <param name="userId">¼º°øÀûÀ¸·Î º¸Á¤µÈ »ç¿ëÀÚ ID</param>
+    public void SuccessfulCalibration(uint userId)
+    {
+        // ¸ğµ¨ À§Ä¡ ¸®¼Â
+        if (offsetNode != null)
+        {
+            offsetNode.transform.rotation = initialRotation;
+        }
+
+        // À§Ä¡ ¿ÀÇÁ¼Â Àçº¸Á¤
+        offsetCalibrated = false;
+    }
+
+    // Kinect¿¡¼­ ÃßÀûµÈ È¸ÀüÀ» °üÀı¿¡ Àû¿ë
+    /// <summary>
+    /// TransformBone ¸Ş¼Òµå´Â Kinect¿¡¼­ ÃßÀûµÈ °üÀı È¸ÀüÀ» ¾Æ¹ÙÅ¸ÀÇ »À¿¡ Àû¿ëÇÕ´Ï´Ù.
+    /// </summary>
+    /// <param name="userId">»ç¿ëÀÚ ID</param>
+    /// <param name="joint">Àû¿ëÇÒ Kinect °üÀı</param>
+    /// <param name="boneIndex">Àû¿ëÇÒ »À ÀÎµ¦½º</param>
+    /// <param name="flip">¹İÀü ¿©ºÎ</param>
+    protected void TransformBone(uint userId, KinectWrapper.NuiSkeletonPositionIndex joint, int boneIndex, bool flip)
+    {
+        Transform boneTransform = bones[boneIndex];
+        if (boneTransform == null || kinectManager == null)
+            return; // »À°¡ ¾ø°Å³ª KinectManager°¡ ¾øÀ¸¸é Á¾·á
+
+        int iJoint = (int)joint;
+        if (iJoint < 0)
+            return; // Àß¸øµÈ °üÀı ÀÎµ¦½º ¹İÈ¯
+
+        // Kinect °üÀıÀÇ È¸Àü °¡Á®¿À±â
+        Quaternion jointRotation = kinectManager.GetJointOrientation(userId, iJoint, flip);
+        if (jointRotation == Quaternion.identity)
+            return; // À¯È¿ÇÏÁö ¾ÊÀº È¸ÀüÀÌ¸é Á¾·á
+
+        // »õ·Î¿î È¸ÀüÀ¸·Î ºÎµå·´°Ô ÀüÈ¯
+        Quaternion newRotation = Kinect2AvatarRot(jointRotation, boneIndex);
+
+        if (smoothFactor != 0f)
+            boneTransform.rotation = Quaternion.Slerp(boneTransform.rotation, newRotation, smoothFactor * Time.deltaTime);
+        else
+            boneTransform.rotation = newRotation; // ½º¹«µù ¾øÀÌ È¸Àü Àû¿ë
+    }
+
+    // Æ¯º°ÇÑ °üÀı¿¡ ´ëÇÑ È¸Àü Àû¿ë
+    /// <summary>
+    /// TransformSpecialBone ¸Ş¼Òµå´Â Æ¯¼ö °üÀı¿¡ ´ëÇÑ È¸ÀüÀ» Àû¿ëÇÕ´Ï´Ù.
+    /// </summary>
+    /// <param name="userId">»ç¿ëÀÚ ID</param>
+    /// <param name="joint">Àû¿ëÇÒ Kinect °üÀı</param>
+    /// <param name="jointParent">ºÎ¸ğ °üÀı</param>
+    /// <param name="boneIndex">Àû¿ëÇÒ »À ÀÎµ¦½º</param>
+    /// <param name="baseDir">±âº» ¹æÇâ</param>
+    /// <param name="flip">¹İÀü ¿©ºÎ</param>
+    protected void TransformSpecialBone(uint userId, KinectWrapper.NuiSkeletonPositionIndex joint, KinectWrapper.NuiSkeletonPositionIndex jointParent, int boneIndex, Vector3 baseDir, bool flip)
+    {
+        Transform boneTransform = bones[boneIndex];
+        if (boneTransform == null || kinectManager == null)
+            return; // »À°¡ ¾ø°Å³ª KinectManager°¡ ¾øÀ¸¸é Á¾·á
+
+        if (!kinectManager.IsJointTracked(userId, (int)joint) ||
+           !kinectManager.IsJointTracked(userId, (int)jointParent))
+        {
+            return; // °üÀıÀÌ ÃßÀûµÇÁö ¾ÊÀ¸¸é Á¾·á
+        }
+
+        // µÎ °üÀı °£ÀÇ ¹æÇâ °¡Á®¿À±â
+        Vector3 jointDir = kinectManager.GetDirectionBetweenJoints(userId, (int)jointParent, (int)joint, false, true);
+        Quaternion jointRotation = jointDir != Vector3.zero ? Quaternion.FromToRotation(baseDir, jointDir) : Quaternion.identity;
+
+        if (jointRotation != Quaternion.identity)
+        {
+            // »õ·Î¿î È¸ÀüÀ¸·Î ºÎµå·´°Ô ÀüÈ¯
+            Quaternion newRotation = Kinect2AvatarRot(jointRotation, boneIndex);
+
+            if (smoothFactor != 0f)
+                boneTransform.rotation = Quaternion.Slerp(boneTransform.rotation, newRotation, smoothFactor * Time.deltaTime);
+            else
+                boneTransform.rotation = newRotation; // ½º¹«µù ¾øÀÌ È¸Àü Àû¿ë
+        }
+    }
+
+    // ¾Æ¹ÙÅ¸¸¦ 3D °ø°£¿¡¼­ ÀÌµ¿ - Ã´ÃßÀÇ ÃßÀû À§Ä¡¸¦ °¡Á®¿Í ·çÆ®¿¡ Àû¿ë
+    /// <summary>
+    /// MoveAvatar ¸Ş¼Òµå´Â ¾Æ¹ÙÅ¸¸¦ 3D °ø°£¿¡¼­ ÀÌµ¿ÇÕ´Ï´Ù.
+    /// »ç¿ëÀÚÀÇ Ã´Ãß À§Ä¡¸¦ ±â¹İÀ¸·Î ¾Æ¹ÙÅ¸ÀÇ ·çÆ®¸¦ ÀÌµ¿ÇÕ´Ï´Ù.
+    /// </summary>
+    /// <param name="UserID">ÀÌµ¿ÇÒ »ç¿ëÀÚ ID</param>
+    protected void MoveAvatar(uint UserID)
+    {
+        if (bodyRoot == null || kinectManager == null)
+            return; // º»Ã¼ ·çÆ®³ª KinectManager°¡ ¾øÀ¸¸é Á¾·á
+        if (!kinectManager.IsJointTracked(UserID, (int)KinectWrapper.NuiSkeletonPositionIndex.HipCenter))
+            return; // ¾ûµ¢ÀÌ ¼¾¼­°¡ ÃßÀûµÇÁö ¾ÊÀ¸¸é Á¾·á
+
+        // ¸öÃ¼ÀÇ À§Ä¡ °¡Á®¿À±â
+        Vector3 trans = kinectManager.GetUserPosition(UserID);
+
+        // ¾Æ¹ÙÅ¸¸¦ Ã³À½ ÀÌµ¿½ÃÅ°´Â °æ¿ì ¿ÀÇÁ¼Â ¼³Á¤
+        if (!offsetCalibrated)
+        {
+            offsetCalibrated = true;
+
+            xOffset = !mirroredMovement ? trans.x * moveRate : -trans.x * moveRate; // ¹İÀü ¿©ºÎ¿¡ µû¸¥ X ¿ÀÇÁ¼Â
+            yOffset = trans.y * moveRate; // Y ¿ÀÇÁ¼Â
+            zOffset = -trans.z * moveRate; // Z ¿ÀÇÁ¼Â
+
+            if (offsetRelativeToSensor)
+            {
+                Vector3 cameraPos = Camera.main.transform.position;
+
+                float yRelToAvatar = (offsetNode != null ? offsetNode.transform.position.y : transform.position.y) - cameraPos.y;
+                Vector3 relativePos = new Vector3(trans.x * moveRate, yRelToAvatar, trans.z * moveRate);
+                Vector3 offsetPos = cameraPos + relativePos;
+
+                if (offsetNode != null)
+                {
+                    offsetNode.transform.position = offsetPos; // ¿ÀÇÁ¼Â ³ëµå À§Ä¡ ¼³Á¤
+                }
+                else
+                {
+                    transform.position = offsetPos; // ¾Æ¹ÙÅ¸ À§Ä¡ ¼³Á¤
+                }
+            }
+        }
+
+        // »õ·Î¿î À§Ä¡·Î ºÎµå·´°Ô ÀüÈ¯
+        Vector3 targetPos = Kinect2AvatarPos(trans, verticalMovement);
+
+        if (smoothFactor != 0f)
+            bodyRoot.localPosition = Vector3.Lerp(bodyRoot.localPosition, targetPos, smoothFactor * Time.deltaTime);
+        else
+            bodyRoot.localPosition = targetPos; // ½º¹«µù ¾øÀÌ À§Ä¡ Àû¿ë
+    }
+
+    // ¸ÅÇÎÇÒ »À°¡ Á¤ÀÇµÇ¾ú´ÂÁö È®ÀÎÇÏ°í ¸ğµ¨¿¡ ÇØ´ç »À¸¦ ¸ÅÇÎ
+    /// <summary>
+    /// MapBones ¸Ş¼Òµå´Â ¾Æ¹ÙÅ¸ÀÇ »À¸¦ Kinect °üÀı¿¡ ¸ÅÇÎÇÕ´Ï´Ù.
+    /// </summary>
+    protected virtual void MapBones()
+    {
+        // ¿ÀÇÁ¼Â ³ëµå¸¦ ¸ğµ¨ º¯È¯ÀÇ ºÎ¸ğ·Î ¼³Á¤
+        offsetNode = new GameObject(name + "Ctrl") { layer = transform.gameObject.layer, tag = transform.gameObject.tag };
+        offsetNode.transform.position = transform.position;
+        offsetNode.transform.rotation = transform.rotation;
+        offsetNode.transform.parent = transform.parent;
+
+        transform.parent = offsetNode.transform; // ¸ğµ¨ º¯È¯ÀÇ ºÎ¸ğ¸¦ ¿ÀÇÁ¼Â ³ëµå·Î ¼³Á¤
+        transform.localPosition = Vector3.zero; // ·ÎÄÃ À§Ä¡ ÃÊ±âÈ­
+        transform.localRotation = Quaternion.identity; // ·ÎÄÃ È¸Àü ÃÊ±âÈ­
+
+        // º»Ã¼ ·çÆ®·Î¼­ ¸ğµ¨ º¯È¯ »ç¿ë
+        bodyRoot = transform;
+
+        // Animator ÄÄÆ÷³ÍÆ®¿¡¼­ »À º¯È¯ °¡Á®¿À±â
+        var animatorComponent = GetComponent<Animator>();
+
+        for (int boneIndex = 0; boneIndex < bones.Length; boneIndex++)
+        {
+            if (!boneIndex2MecanimMap.ContainsKey(boneIndex))
+                continue; // ¸ÅÇÎµÇÁö ¾ÊÀº »À´Â °Ç³Ê¶Ü
+
+            bones[boneIndex] = animatorComponent.GetBoneTransform(boneIndex2MecanimMap[boneIndex]); // »À º¯È¯ ¼³Á¤
+        }
+    }
+
+    // »ÀÀÇ ÃÊ±â È¸Àü Ä¸Ã³
+    /// <summary>
+    /// GetInitialRotations ¸Ş¼Òµå´Â »ÀÀÇ ÃÊ±â È¸ÀüÀ» Ä¸Ã³ÇÕ´Ï´Ù.
+    /// </summary>
+    protected void GetInitialRotations()
+    {
+        // ÃÊ±â È¸Àü ÀúÀå
+        if (offsetNode != null)
+        {
+            initialPosition = offsetNode.transform.position;
+            initialRotation = offsetNode.transform.rotation;
+
+            offsetNode.transform.rotation = Quaternion.identity; // ¿ÀÇÁ¼Â ³ëµå È¸Àü ÃÊ±âÈ­
+        }
+        else
+        {
+            initialPosition = transform.position;
+            initialRotation = transform.rotation;
+
+            transform.rotation = Quaternion.identity; // ¾Æ¹ÙÅ¸ È¸Àü ÃÊ±âÈ­
+        }
+
+        for (int i = 0; i < bones.Length; i++)
+        {
+            if (bones[i] != null)
+            {
+                initialRotations[i] = bones[i].rotation; // ÃÊ±â È¸Àü Ä¸Ã³
+                initialLocalRotations[i] = bones[i].localRotation; // ÃÊ±â ·ÎÄÃ È¸Àü Ä¸Ã³
+            }
+        }
+
+        // ÃÊ±â È¸Àü º¹¿ø
+        if (offsetNode != null)
+        {
+            offsetNode.transform.rotation = initialRotation; // ¿ÀÇÁ¼Â ³ëµå È¸Àü º¹¿ø
+        }
+        else
+        {
+            transform.rotation = initialRotation; // ¾Æ¹ÙÅ¸ È¸Àü º¹¿ø
+        }
+    }
+
+    // Kinect °üÀı È¸ÀüÀ» ¾Æ¹ÙÅ¸ °üÀı È¸ÀüÀ¸·Î º¯È¯
+    /// <summary>
+    /// Kinect2AvatarRot ¸Ş¼Òµå´Â Kinect °üÀı È¸ÀüÀ» ¾Æ¹ÙÅ¸ °üÀı È¸ÀüÀ¸·Î º¯È¯ÇÕ´Ï´Ù.
+    /// </summary>
+    /// <param name="jointRotation">Kinect °üÀı È¸Àü</param>
+    /// <param name="boneIndex">º¯È¯ÇÒ »À ÀÎµ¦½º</param>
+    /// <returns>º¯È¯µÈ ¾Æ¹ÙÅ¸ °üÀı È¸Àü</returns>
+    protected Quaternion Kinect2AvatarRot(Quaternion jointRotation, int boneIndex)
+    {
+        // »õ È¸Àü Àû¿ë
         Quaternion newRotation = jointRotation * initialRotations[boneIndex];
-		
-		// ì˜¤í”„ì…‹ ë…¸ë“œê°€ ì§€ì •ëœ ê²½ìš° ë³€í™˜ì„ ê·¸ì™€ ê²°í•©í•©ë‹ˆë‹¤.
-		// ë³¸ì§ˆì ìœ¼ë¡œ ë…¸ë“œì— ëŒ€í•´ ê³¨ê²©ì„ ë§Œë“œëŠ” ë°©í–¥
-		if (offsetNode != null)
-		{
-			// Eulerì™€ Offsetì˜ Eulerë¥¼ ì¶”ê°€í•˜ì—¬ ì´ íšŒì „ì„ ì¡ìœ¼ì‹­ì‹œì˜¤.
-			Vector3 totalRotation = newRotation.eulerAngles + offsetNode.transform.rotation.eulerAngles;
-			// ìš°ë¦¬ì˜ ìƒˆë¡œìš´ íšŒì „ì„ ì¡ìœ¼ì‹­ì‹œì˜¤.
-			newRotation = Quaternion.Euler(totalRotation);
-		}
-		
-		return newRotation;
-	}
-	
-	// ì´ˆê¸° ìœ„ì¹˜, ë¯¸ëŸ¬ë§ ë° ì´ë™ ì†ë„ì— ë”°ë¼ Kinect ìœ„ì¹˜ë¥¼ ì•„ë°”íƒ€ ê³¨ê²© ìœ„ì¹˜ë¡œ ë³€í™˜í•©ë‹ˆë‹¤.
-	protected Vector3 Kinect2AvatarPos(Vector3 jointPosition, bool bMoveVertically)
-	{
-		float xPos;
-		float yPos;
-		float zPos;
-		
-		// ì›€ì§ì„ì´ ë°˜ì˜ë˜ë©´ ë°˜ì „í•˜ì‹­ì‹œì˜¤.
-		if(!mirroredMovement)
-			xPos = jointPosition.x * moveRate - xOffset;
-		else
-			xPos = -jointPosition.x * moveRate - xOffset;
-		
-		yPos = jointPosition.y * moveRate - yOffset;
-		zPos = -jointPosition.z * moveRate - zOffset;
-		
-		// ìˆ˜ì§ ì´ë™ì„ ì¶”ì í•˜ëŠ” ê²½ìš° yë¥¼ ì—…ë°ì´íŠ¸í•˜ì‹­ì‹œì˜¤.
-        // ê·¸ë ‡ì§€ ì•Šìœ¼ë©´ ê·¸ê²ƒì„ ë‚´ë²„ë ¤ ë‘ì‹­ì‹œì˜¤.
-		Vector3 avatarJointPos = new Vector3(xPos, bMoveVertically ? yPos : 0f, zPos);
-		
-		return avatarJointPos;
-	}
-	
-	// ë¼ˆ ê°€ê³µ ì†ë„ë¥¼ ë†’ì´ëŠ” ì‚¬ì „
-	// Mecanim-Bones ë§¤í•‘ì— ëŒ€í•œ Kinect-Jointsì— ëŒ€í•œ í›Œë¥­í•œ ì•„ì´ë””ì–´ì˜ ì €ì
-	// ë‹¤ìŒ ì‚¬ì „ ISë¥¼ í¬í•¨í•œ ì´ˆê¸° êµ¬í˜„ê³¼ í•¨ê»˜
-	// Mikhail Korchun (korchoon@gmail.com).
-    // ì´ ì‚¬ëŒì—ê²Œ í° ê°ì‚¬í•©ë‹ˆë‹¤!
-	private readonly Dictionary<int, HumanBodyBones> boneIndex2MecanimMap = new Dictionary<int, HumanBodyBones>
-	{
-		{0, HumanBodyBones.Hips},
-		{1, HumanBodyBones.Spine},
-		{2, HumanBodyBones.Neck},
-		{3, HumanBodyBones.Head},
-		
-		{4, HumanBodyBones.LeftShoulder},
-		{5, HumanBodyBones.LeftUpperArm},
-		{6, HumanBodyBones.LeftLowerArm},
-		{7, HumanBodyBones.LeftHand},
-		{8, HumanBodyBones.LeftIndexProximal},
 
-		{9, HumanBodyBones.RightShoulder},
-		{10, HumanBodyBones.RightUpperArm},
-		{11, HumanBodyBones.RightLowerArm},
-		{12, HumanBodyBones.RightHand},
-		{13, HumanBodyBones.RightIndexProximal},
+        // ¿ÀÇÁ¼Â ³ëµå°¡ ÁöÁ¤µÈ °æ¿ì È¸Àü °áÇÕ
+        if (offsetNode != null)
+        {
+            // ¿ÀÇÁ¼ÂÀÇ ¿ÀÀÏ·¯¸¦ ´õÇÏ¿© ÃÑ È¸Àü È¹µæ
+            Vector3 totalRotation = newRotation.eulerAngles + offsetNode.transform.rotation.eulerAngles;
+            // »õ·Î¿î È¸Àü °¡Á®¿À±â
+            newRotation = Quaternion.Euler(totalRotation);
+        }
 
-		{14, HumanBodyBones.LeftUpperLeg},
-		{15, HumanBodyBones.LeftLowerLeg},
-		{16, HumanBodyBones.LeftFoot},
-		{17, HumanBodyBones.LeftToes},
-		
-		{18, HumanBodyBones.RightUpperLeg},
-		{19, HumanBodyBones.RightLowerLeg},
-		{20, HumanBodyBones.RightFoot},
-		{21, HumanBodyBones.RightToes},
-	};
-	
-	protected readonly Dictionary<int, KinectWrapper.NuiSkeletonPositionIndex> boneIndex2JointMap = new Dictionary<int, KinectWrapper.NuiSkeletonPositionIndex>
-	{
-		{0, KinectWrapper.NuiSkeletonPositionIndex.HipCenter},
-		{1, KinectWrapper.NuiSkeletonPositionIndex.Spine},
-		{2, KinectWrapper.NuiSkeletonPositionIndex.ShoulderCenter},
-		{3, KinectWrapper.NuiSkeletonPositionIndex.Head},
-		
-		{5, KinectWrapper.NuiSkeletonPositionIndex.ShoulderLeft},
-		{6, KinectWrapper.NuiSkeletonPositionIndex.ElbowLeft},
-		{7, KinectWrapper.NuiSkeletonPositionIndex.WristLeft},
-		{8, KinectWrapper.NuiSkeletonPositionIndex.HandLeft},
-		
-		{10, KinectWrapper.NuiSkeletonPositionIndex.ShoulderRight},
-		{11, KinectWrapper.NuiSkeletonPositionIndex.ElbowRight},
-		{12, KinectWrapper.NuiSkeletonPositionIndex.WristRight},
-		{13, KinectWrapper.NuiSkeletonPositionIndex.HandRight},
-		
-		{14, KinectWrapper.NuiSkeletonPositionIndex.HipLeft},
-		{15, KinectWrapper.NuiSkeletonPositionIndex.KneeLeft},
-		{16, KinectWrapper.NuiSkeletonPositionIndex.AnkleLeft},
-		{17, KinectWrapper.NuiSkeletonPositionIndex.FootLeft},
-		
-		{18, KinectWrapper.NuiSkeletonPositionIndex.HipRight},
-		{19, KinectWrapper.NuiSkeletonPositionIndex.KneeRight},
-		{20, KinectWrapper.NuiSkeletonPositionIndex.AnkleRight},
-		{21, KinectWrapper.NuiSkeletonPositionIndex.FootRight},
-	};
-	
-	protected readonly Dictionary<int, List<KinectWrapper.NuiSkeletonPositionIndex>> specIndex2JointMap = new Dictionary<int, List<KinectWrapper.NuiSkeletonPositionIndex>>
-	{
-		{4, new List<KinectWrapper.NuiSkeletonPositionIndex> {KinectWrapper.NuiSkeletonPositionIndex.ShoulderLeft, KinectWrapper.NuiSkeletonPositionIndex.ShoulderCenter} },
-		{9, new List<KinectWrapper.NuiSkeletonPositionIndex> {KinectWrapper.NuiSkeletonPositionIndex.ShoulderRight, KinectWrapper.NuiSkeletonPositionIndex.ShoulderCenter} },
-	};
-	
-	protected readonly Dictionary<int, KinectWrapper.NuiSkeletonPositionIndex> boneIndex2MirrorJointMap = new Dictionary<int, KinectWrapper.NuiSkeletonPositionIndex>
-	{
-		{0, KinectWrapper.NuiSkeletonPositionIndex.HipCenter},
-		{1, KinectWrapper.NuiSkeletonPositionIndex.Spine},
-		{2, KinectWrapper.NuiSkeletonPositionIndex.ShoulderCenter},
-		{3, KinectWrapper.NuiSkeletonPositionIndex.Head},
-		
-		{5, KinectWrapper.NuiSkeletonPositionIndex.ShoulderRight},
-		{6, KinectWrapper.NuiSkeletonPositionIndex.ElbowRight},
-		{7, KinectWrapper.NuiSkeletonPositionIndex.WristRight},
-		{8, KinectWrapper.NuiSkeletonPositionIndex.HandRight},
-		
-		{10, KinectWrapper.NuiSkeletonPositionIndex.ShoulderLeft},
-		{11, KinectWrapper.NuiSkeletonPositionIndex.ElbowLeft},
-		{12, KinectWrapper.NuiSkeletonPositionIndex.WristLeft},
-		{13, KinectWrapper.NuiSkeletonPositionIndex.HandLeft},
-		
-		{14, KinectWrapper.NuiSkeletonPositionIndex.HipRight},
-		{15, KinectWrapper.NuiSkeletonPositionIndex.KneeRight},
-		{16, KinectWrapper.NuiSkeletonPositionIndex.AnkleRight},
-		{17, KinectWrapper.NuiSkeletonPositionIndex.FootRight},
-		
-		{18, KinectWrapper.NuiSkeletonPositionIndex.HipLeft},
-		{19, KinectWrapper.NuiSkeletonPositionIndex.KneeLeft},
-		{20, KinectWrapper.NuiSkeletonPositionIndex.AnkleLeft},
-		{21, KinectWrapper.NuiSkeletonPositionIndex.FootLeft},
-	};
-	
-	protected readonly Dictionary<int, List<KinectWrapper.NuiSkeletonPositionIndex>> specIndex2MirrorJointMap = new Dictionary<int, List<KinectWrapper.NuiSkeletonPositionIndex>>
-	{
-		{4, new List<KinectWrapper.NuiSkeletonPositionIndex> {KinectWrapper.NuiSkeletonPositionIndex.ShoulderRight, KinectWrapper.NuiSkeletonPositionIndex.ShoulderCenter} },
-		{9, new List<KinectWrapper.NuiSkeletonPositionIndex> {KinectWrapper.NuiSkeletonPositionIndex.ShoulderLeft, KinectWrapper.NuiSkeletonPositionIndex.ShoulderCenter} },
-	};
-	
+        return newRotation; // º¯È¯µÈ È¸Àü ¹İÈ¯
+    }
+
+    // Kinect À§Ä¡¸¦ ¾Æ¹ÙÅ¸ ½ºÄÌ·¹Åæ À§Ä¡·Î º¯È¯
+    /// <summary>
+    /// Kinect2AvatarPos ¸Ş¼Òµå´Â Kinect À§Ä¡¸¦ ¾Æ¹ÙÅ¸ ½ºÄÌ·¹Åæ À§Ä¡·Î º¯È¯ÇÕ´Ï´Ù.
+    /// </summary>
+    /// <param name="jointPosition">Kinect °üÀı À§Ä¡</param>
+    /// <param name="bMoveVertically">¼öÁ÷ ÀÌµ¿ ¿©ºÎ</param>
+    /// <returns>º¯È¯µÈ ¾Æ¹ÙÅ¸ À§Ä¡</returns>
+    protected Vector3 Kinect2AvatarPos(Vector3 jointPosition, bool bMoveVertically)
+    {
+        float xPos;
+        float yPos;
+        float zPos;
+
+        // ÀÌµ¿ÀÌ ¹İÀüµÇ¸é X ¹İÀü
+        if (!mirroredMovement)
+            xPos = jointPosition.x * moveRate - xOffset; // X ¿ÀÇÁ¼Â Àû¿ë
+        else
+            xPos = -jointPosition.x * moveRate - xOffset; // X ¿ÀÇÁ¼Â Àû¿ë (¹İÀü)
+
+        yPos = jointPosition.y * moveRate - yOffset; // Y ¿ÀÇÁ¼Â Àû¿ë
+        zPos = -jointPosition.z * moveRate - zOffset; // Z ¿ÀÇÁ¼Â Àû¿ë
+
+        // ¼öÁ÷ ÀÌµ¿À» ÃßÀûÇÏ´Â °æ¿ì Y °ªÀ» ¾÷µ¥ÀÌÆ®
+        Vector3 avatarJointPos = new Vector3(xPos, bMoveVertically ? yPos : 0f, zPos);
+
+        return avatarJointPos; // º¯È¯µÈ À§Ä¡ ¹İÈ¯
+    }
+
+    // »À ¸ÅÇÎÀ» ÃÖÀûÈ­ÇÏ±â À§ÇÑ µñ¼Å³Ê¸®
+    // Kinect °üÀı°ú Mecanim »À ¸ÅÇÎ
+    private readonly Dictionary<int, HumanBodyBones> boneIndex2MecanimMap = new Dictionary<int, HumanBodyBones>
+    {
+        {0, HumanBodyBones.Hips},
+        {1, HumanBodyBones.Spine},
+        {2, HumanBodyBones.Neck},
+        {3, HumanBodyBones.Head},
+
+        {4, HumanBodyBones.LeftShoulder},
+        {5, HumanBodyBones.LeftUpperArm},
+        {6, HumanBodyBones.LeftLowerArm},
+        {7, HumanBodyBones.LeftHand},
+        {8, HumanBodyBones.LeftIndexProximal},
+
+        {9, HumanBodyBones.RightShoulder},
+        {10, HumanBodyBones.RightUpperArm},
+        {11, HumanBodyBones.RightLowerArm},
+        {12, HumanBodyBones.RightHand},
+        {13, HumanBodyBones.RightIndexProximal},
+
+        {14, HumanBodyBones.LeftUpperLeg},
+        {15, HumanBodyBones.LeftLowerLeg},
+        {16, HumanBodyBones.LeftFoot},
+        {17, HumanBodyBones.LeftToes},
+
+        {18, HumanBodyBones.RightUpperLeg},
+        {19, HumanBodyBones.RightLowerLeg},
+        {20, HumanBodyBones.RightFoot},
+        {21, HumanBodyBones.RightToes},
+    };
+
+    // »À ÀÎµ¦½º¸¦ Kinect °üÀı¿¡ ¸ÅÇÎ
+    protected readonly Dictionary<int, KinectWrapper.NuiSkeletonPositionIndex> boneIndex2JointMap = new Dictionary<int, KinectWrapper.NuiSkeletonPositionIndex>
+    {
+        {0, KinectWrapper.NuiSkeletonPositionIndex.HipCenter},
+        {1, KinectWrapper.NuiSkeletonPositionIndex.Spine},
+        {2, KinectWrapper.NuiSkeletonPositionIndex.ShoulderCenter},
+        {3, KinectWrapper.NuiSkeletonPositionIndex.Head},
+
+        {5, KinectWrapper.NuiSkeletonPositionIndex.ShoulderLeft},
+        {6, KinectWrapper.NuiSkeletonPositionIndex.ElbowLeft},
+        {7, KinectWrapper.NuiSkeletonPositionIndex.WristLeft},
+        {8, KinectWrapper.NuiSkeletonPositionIndex.HandLeft},
+
+        {10, KinectWrapper.NuiSkeletonPositionIndex.ShoulderRight},
+        {11, KinectWrapper.NuiSkeletonPositionIndex.ElbowRight},
+        {12, KinectWrapper.NuiSkeletonPositionIndex.WristRight},
+        {13, KinectWrapper.NuiSkeletonPositionIndex.HandRight},
+
+        {14, KinectWrapper.NuiSkeletonPositionIndex.HipLeft},
+        {15, KinectWrapper.NuiSkeletonPositionIndex.KneeLeft},
+        {16, KinectWrapper.NuiSkeletonPositionIndex.AnkleLeft},
+        {17, KinectWrapper.NuiSkeletonPositionIndex.FootLeft},
+
+        {18, KinectWrapper.NuiSkeletonPositionIndex.HipRight},
+        {19, KinectWrapper.NuiSkeletonPositionIndex.KneeRight},
+        {20, KinectWrapper.NuiSkeletonPositionIndex.AnkleRight},
+        {21, KinectWrapper.NuiSkeletonPositionIndex.FootRight},
+    };
+
+    // »À ÀÎµ¦½º¸¦ Æ¯¼ö °üÀı¿¡ ¸ÅÇÎ
+    protected readonly Dictionary<int, List<KinectWrapper.NuiSkeletonPositionIndex>> specIndex2JointMap = new Dictionary<int, List<KinectWrapper.NuiSkeletonPositionIndex>>
+    {
+        {4, new List<KinectWrapper.NuiSkeletonPositionIndex> {KinectWrapper.NuiSkeletonPositionIndex.ShoulderLeft, KinectWrapper.NuiSkeletonPositionIndex.ShoulderCenter} },
+        {9, new List<KinectWrapper.NuiSkeletonPositionIndex> {KinectWrapper.NuiSkeletonPositionIndex.ShoulderRight, KinectWrapper.NuiSkeletonPositionIndex.ShoulderCenter} },
+    };
+
+    // ¹İÀüµÈ »À ÀÎµ¦½º ¸ÅÇÎ
+    protected readonly Dictionary<int, KinectWrapper.NuiSkeletonPositionIndex> boneIndex2MirrorJointMap = new Dictionary<int, KinectWrapper.NuiSkeletonPositionIndex>
+    {
+        {0, KinectWrapper.NuiSkeletonPositionIndex.HipCenter},
+        {1, KinectWrapper.NuiSkeletonPositionIndex.Spine},
+        {2, KinectWrapper.NuiSkeletonPositionIndex.ShoulderCenter},
+        {3, KinectWrapper.NuiSkeletonPositionIndex.Head},
+
+        {5, KinectWrapper.NuiSkeletonPositionIndex.ShoulderRight},
+        {6, KinectWrapper.NuiSkeletonPositionIndex.ElbowRight},
+        {7, KinectWrapper.NuiSkeletonPositionIndex.WristRight},
+        {8, KinectWrapper.NuiSkeletonPositionIndex.HandRight},
+
+        {10, KinectWrapper.NuiSkeletonPositionIndex.ShoulderLeft},
+        {11, KinectWrapper.NuiSkeletonPositionIndex.ElbowLeft},
+        {12, KinectWrapper.NuiSkeletonPositionIndex.WristLeft},
+        {13, KinectWrapper.NuiSkeletonPositionIndex.HandLeft},
+
+        {14, KinectWrapper.NuiSkeletonPositionIndex.HipRight},
+        {15, KinectWrapper.NuiSkeletonPositionIndex.KneeRight},
+        {16, KinectWrapper.NuiSkeletonPositionIndex.AnkleRight},
+        {17, KinectWrapper.NuiSkeletonPositionIndex.FootRight},
+
+        {18, KinectWrapper.NuiSkeletonPositionIndex.HipLeft},
+        {19, KinectWrapper.NuiSkeletonPositionIndex.KneeLeft},
+        {20, KinectWrapper.NuiSkeletonPositionIndex.AnkleLeft},
+        {21, KinectWrapper.NuiSkeletonPositionIndex.FootLeft},
+    };
+
+    // Æ¯¼ö »À ÀÎµ¦½º¸¦ ¹İÀüµÈ °üÀı¿¡ ¸ÅÇÎ
+    protected readonly Dictionary<int, List<KinectWrapper.NuiSkeletonPositionIndex>> specIndex2MirrorJointMap = new Dictionary<int, List<KinectWrapper.NuiSkeletonPositionIndex>>
+    {
+        {4, new List<KinectWrapper.NuiSkeletonPositionIndex> {KinectWrapper.NuiSkeletonPositionIndex.ShoulderRight, KinectWrapper.NuiSkeletonPositionIndex.ShoulderCenter} },
+        {9, new List<KinectWrapper.NuiSkeletonPositionIndex> {KinectWrapper.NuiSkeletonPositionIndex.ShoulderLeft, KinectWrapper.NuiSkeletonPositionIndex.ShoulderCenter} },
+    };
 }
-

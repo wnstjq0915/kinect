@@ -7,191 +7,236 @@ using System.Runtime.InteropServices;
 using System.IO;
 using System.Text;
 
-
+/**
+ * <summary>
+ * KinectManager Å¬·¡½º´Â Kinect v1 ¼¾¼­¸¦ ÀÌ¿ëÇÏ¿© »ç¿ëÀÚ ½ºÄÌ·¹Åæ µ¥ÀÌÅÍ¸¦ °ü¸®ÇÏ°í,
+ * ÀÌ¸¦ ±â¹İÀ¸·Î ¾Æ¹ÙÅ¸ÀÇ ¿òÁ÷ÀÓ ¹× Á¦½ºÃ³¸¦ Ã³¸®ÇÏ´Â ±â´ÉÀ» Á¦°øÇÕ´Ï´Ù.
+ * </summary>
+ */
 public class KinectManager : MonoBehaviour
 {
-	public enum Smoothing : int { None, Default, Medium, Aggressive }
-	
-	
-	// ê³µê°œ ë¶€ë¦¬ê°€ ì–¼ë§ˆë‚˜ ë§ì€ í”Œë ˆì´ì–´ê°€ ìˆëŠ”ì§€ ê²°ì •í•©ë‹ˆë‹¤.
-    // í•œ ì‚¬ìš©ìì˜ ê¸°ë³¸ê°’.
-	public bool TwoUsers = false;
-	
-    // ì„¼ì„œê°€ ê°€ê¹Œìš´ ëª¨ë“œì—ì„œ ì‚¬ìš©ë˜ëŠ”ì§€ í™•ì¸í•˜ê¸°ìœ„í•œ public bool.
+    /*
+    KinectManager Å¬·¡½º´Â Kinect v1 ¼¾¼­¸¦ ÀÌ¿ëÇÏ¿© »ç¿ëÀÚ ½ºÄÌ·¹Åæ µ¥ÀÌÅÍ¸¦ °ü¸®ÇÏ°í,
+    ÀÌ¸¦ ±â¹İÀ¸·Î ¾Æ¹ÙÅ¸ÀÇ ¿òÁ÷ÀÓ ¹× Á¦½ºÃ³¸¦ Ã³¸®ÇÏ´Â ±â´ÉÀ» Á¦°øÇÏ´Â Å¬·¡½ºÀÔ´Ï´Ù.
+    ÀÌ Å¬·¡½ºÀÇ ÁÖ¿ä ±â´É°ú ¿ä¼Ò¸¦ ¿ä¾àÇÏ¸é ´ÙÀ½°ú °°½À´Ï´Ù.
 
-	// ì‚¬ìš©ìì§€ë„ë¥¼ ìˆ˜ì‹ í•˜ê³  ê³„ì‚°í• ì§€ ì—¬ë¶€ë¥¼ ê²°ì •í•˜ê¸°ìœ„í•œ ê³µê°œ bool
-	public bool ComputeUserMap = false;
-	
-	// ì»¬ëŸ¬ ë§µ ìˆ˜ì‹  ë° ê³„ì‚° ì—¬ë¶€ë¥¼ ê²°ì •í•˜ëŠ” Public Bool
-	public bool ComputeColorMap = false;
-	
-	// GUIì— ì‚¬ìš©ì ë§µì„ í‘œì‹œí• ì§€ ì—¬ë¶€ë¥¼ ê²°ì •í•˜ëŠ” Public Bool
-	public bool DisplayUserMap = false;
-	
-	// GUIì— ì»¬ëŸ¬ ë§µì„ í‘œì‹œí• ì§€ ì—¬ë¶€ë¥¼ ê²°ì •í•˜ëŠ” Public Bool
-	public bool DisplayColorMap = false;
-	
-	// ì‚¬ìš©ìì§€ë„ì— ê³¨ê²© ë¼ì¸ì„ í‘œì‹œí• ì§€ ì—¬ë¶€ë¥¼ ê²°ì •í•˜ê¸°ìœ„í•œ ê³µê°œ Bool
-	public bool DisplaySkeletonLines = false;
-	
-	// ê³µê°œ í”Œë¡œíŠ¸ëŠ” ì¹´ë©”ë¼ ë„ˆë¹„ì˜ %ë¡œ ê¹Šì´ ë° ìƒ‰ìƒ ë§µìœ¼ë¡œ ì‚¬ìš©ë˜ëŠ” ì´ë¯¸ì§€ ë„ˆë¹„ë¥¼ ì§€ì •í•©ë‹ˆë‹¤.
-    // ë†’ì´ëŠ” ë„ˆë¹„ì— ë”°ë¼ ê³„ì‚°ë©ë‹ˆë‹¤.
-	// ë°±ë¶„ìœ¨ì´ 0ì´ë©´ ì„ íƒëœ í­ê³¼ ê¹Šì´ ì´ë¯¸ì§€ì˜ ë†’ì´ì™€ ì¼ì¹˜í•˜ë„ë¡ ë‚´ë¶€ì ìœ¼ë¡œ ê³„ì‚°ë©ë‹ˆë‹¤.
-	public float DisplayMapsWidthPercent = 20f;
+    ÁÖ¿ä ±â´É
+        Kinect ÃÊ±âÈ­:
+            Awake() ¸Ş¼Òµå¿¡¼­ Kinect ¼¾¼­¸¦ ÃÊ±âÈ­ÇÏ°í, ½ºÄÌ·¹Åæ Æ®·¡Å·À» ¼³Á¤ÇÕ´Ï´Ù.
+            ±íÀÌ ¹× »ö»ó ½ºÆ®¸²À» È°¼ºÈ­ÇÏ°í, KinectÀÇ ±â¿ï±â °¢µµ¸¦ ¼³Á¤ÇÕ´Ï´Ù.
 
-	// ì„¼ì„œ (ë¯¸í„°)ì§€ë©´ì—ì„œ ì–¼ë§ˆë‚˜ ë†’ì€ì§€.
-	public float SensorHeight = 1.0f;
+        »ç¿ëÀÚ °¨Áö ¹× Æ®·¡Å·:
+            »ç¿ëÀÚÀÇ ½ºÄÌ·¹Åæ µ¥ÀÌÅÍ¸¦ ½Ç½Ã°£À¸·Î °¨ÁöÇÏ°í Ã³¸®ÇÕ´Ï´Ù.
+            »ç¿ëÀÚ°¡ °¨ÁöµÇ¸é ÇØ´ç »ç¿ëÀÚÀÇ ID¿Í Á¤º¸¸¦ °ü¸®ÇÕ´Ï´Ù.
 
-	// Kinect ê³ ë„ ê°ë„ (ë„)
-	public int SensorAngle = 0;
-	
-	// ê³¨ê²© ë°ì´í„°ë¥¼ ì²˜ë¦¬í•˜ê¸° ìœ„í•´ ìµœì†Œ ì‚¬ìš©ì ê±°ë¦¬
-	public float MinUserDistance = 1.0f;
-	
-	// ìµœëŒ€ ì‚¬ìš©ì ê±°ë¦¬ (ìˆëŠ” ê²½ìš°).
-    // 0ì€ ìµœëŒ€ ìš©ê¸° ì œí•œì´ ì—†ìŒì„ ì˜ë¯¸í•©ë‹ˆë‹¤
-	public float MaxUserDistance = 0f;
-	
-	// ê°€ì¥ ê°€ê¹Œìš´ ì‚¬ìš©ì ë§Œ ê°ì§€í• ì§€ ì—¬ë¶€ë¥¼ ê²°ì •í•˜ëŠ” Public Bool
-	public bool DetectClosestUser = true;
-	
-	// ì¶”ì  ëœ ì¡°ì¸íŠ¸ ë§Œ ì‚¬ìš©í• ì§€ ì—¬ë¶€ë¥¼ ê²°ì •í•˜ê¸°ìœ„í•œ ê³µê°œ Bool (ë° ì¶”ë¡  ëœ ì¡°ì¸íŠ¸ë¥¼ ë¬´ì‹œí•˜ì‹­ì‹œì˜¤)
-	public bool IgnoreInferredJoints = true;
-	
-	// ìŠ¤ë¬´ë”© ë§¤ê°œ ë³€ìˆ˜ ì„ íƒ
-	public Smoothing smoothing = Smoothing.Default;
-	
-	// ì¶”ê°€ í•„í„°ì˜ ì‚¬ìš©ì„ ê²°ì •í•˜ê¸°ìœ„í•œ ê³µê°œ bool
-	public bool UseBoneOrientationsFilter = false;
-	public bool UseClippedLegsFilter = false;
-	public bool UseBoneOrientationsConstraint = true;
-	public bool UseSelfIntersectionConstraint = false;
-	
-	// ì–´ë–¤ í”Œë ˆì´ì–´ê°€ ì œì–´ í•  gameObjects ëª©ë¡.
-	public List<GameObject> Player1Avatars;
-	public List<GameObject> Player2Avatars;
-	
-	// í•„ìš”í•œ ê²½ìš° ê° í”Œë ˆì´ì–´ì— ëŒ€í•œ êµì •ì´ ìˆìŠµë‹ˆë‹¤
-	public KinectGestures.Gestures Player1CalibrationPose;
-	public KinectGestures.Gestures Player2CalibrationPose;
-	
-	// ê° í”Œë ˆì´ì–´ì— ëŒ€í•´ ê°ì§€ í•  ì œìŠ¤ì²˜ ëª©ë¡
-	public List<KinectGestures.Gestures> Player1Gestures;
-	public List<KinectGestures.Gestures> Player2Gestures;
-	
-	// ì œìŠ¤ì²˜ íƒì§€ ì‚¬ì´ì˜ ìµœì†Œ ì‹œê°„
-	public float MinTimeBetweenGestures = 0.7f;
-	
-	// ì œìŠ¤ì²˜ ì²­ì·¨ì ëª©ë¡.
-    // kinectustures.gesturelistenerinterfaceë¥¼ êµ¬í˜„í•´ì•¼í•©ë‹ˆë‹¤
-	public List<MonoBehaviour> GestureListeners;
-	
-	// ë©”ì‹œì§€ë¥¼ í‘œì‹œí•˜ëŠ” GUI í…ìŠ¤íŠ¸.
-	public GUIText CalibrationText;
-	
-	// GUI í…ìŠ¤ì²˜ í”Œë ˆì´ì–´ 1ì˜ í•¸ë“œ ì»¤ì„œë¥¼ í‘œì‹œí•˜ëŠ” GUI í…ìŠ¤ì²˜
-	public GameObject HandCursor1;
-	
-	// GUI í…ìŠ¤ì²˜ í”Œë ˆì´ì–´ 1ì˜ í•¸ë“œ ì»¤ì„œë¥¼ í‘œì‹œí•˜ëŠ” GUI í…ìŠ¤ì²˜
-	public GameObject HandCursor2;
-	
-	// BOOL ì™¼ìª½/ì˜¤ë¥¸ìª½ í•¸ë“œ-ì…”ë¥´ ë° í´ë¦­ ì œìŠ¤ì²˜ê°€ ë§ˆìš°ìŠ¤ ì»¤ì„œë¥¼ ì œì–´í•˜ê³  í´ë¦­ ì—¬ë¶€ë¥¼ ì§€ì •í•©ë‹ˆë‹¤.
-	public bool ControlMouseCursor = false;
+        ½ºÄÌ·¹Åæ µ¥ÀÌÅÍ Ã³¸®:
+            Update() ¸Ş¼Òµå¿¡¼­ Kinect »ç¿ëÀÚ·ÎºÎÅÍ ±íÀÌ ¹× »ö»ó µ¥ÀÌÅÍ¸¦ °¡Á®¿Í ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+            ½ºÄÌ·¹Åæ µ¥ÀÌÅÍ¸¦ Ã³¸®ÇÏ°í °¢ °üÀıÀÇ À§Ä¡¿Í È¸ÀüÀ» °è»êÇÏ¿© ¾Æ¹ÙÅ¸¿¡ Àû¿ëÇÕ´Ï´Ù.
 
-	// ì œìŠ¤ì²˜ ë””ë²„ê·¸ ë©”ì‹œì§€ë¥¼ í‘œì‹œí•˜ëŠ” GUI í…ìŠ¤íŠ¸.
-	public GUIText GesturesDebugText;
-	
+        Á¦½ºÃ³ ÀÎ½Ä:
+            Æ¯Á¤ Á¦½ºÃ³¸¦ °¨ÁöÇÏ°í, ÀÌ¸¦ ±â¹İÀ¸·Î ´Ù¾çÇÑ µ¿ÀÛÀ» ½ÇÇàÇÕ´Ï´Ù.
+            »ç¿ëÀÚÀÇ Á¦½ºÃ³ ÁøÇà·üÀ» ÃßÀûÇÏ°í, ¿Ï·áµÈ Á¦½ºÃ³¿¡ ´ëÇÑ Ã³¸®¸¦ ¼öÇàÇÕ´Ï´Ù.
+    
+        »ç¿ëÀÚ ¸Ê °è»ê:
+            »ç¿ëÀÚ°¡ °¨ÁöµÈ ±íÀÌ µ¥ÀÌÅÍ¸¦ ±â¹İÀ¸·Î »ç¿ëÀÚ ¸Ê°ú »ö»ó ¸ÊÀ» °è»êÇÏ¿© GUI¿¡ Ç¥½ÃÇÕ´Ï´Ù.
 
-	// Kinectê°€ ì´ˆê¸°í™”ë˜ì—ˆëŠ”ì§€ ì—¬ë¶€ë¥¼ ì¶”ì í•˜ê¸°ìœ„í•œ Bool
-	private bool KinectInitialized = false; 
-	
-	// ëˆ„ê°€ í˜„ì¬ êµì • ëœ ì‚¬ëŒì„ ì¶”ì í•˜ëŠ” ë¶€ìš¸.
-	private bool Player1Calibrated = false;
-	private bool Player2Calibrated = false;
-	
-	private bool AllPlayersCalibrated = false;
-	
-	// ì–´ë–¤ ID (Kinectê°€ í• ë‹¹ í•œ)ë¥¼ ì¶”ì í•˜ëŠ” ê°’ì€ í”Œë ˆì´ì–´ 1 ë° í”Œë ˆì´ì–´ 2ì…ë‹ˆë‹¤.
-	private uint Player1ID;
-	private uint Player2ID;
-	
-	private int Player1Index;
-	private int Player2Index;
-	
-	// ëª¨ë¸ì„ ì—…ë°ì´íŠ¸ í•  ìˆ˜ìˆëŠ” AvatarControllers ëª©ë¡.
-	private List<AvatarController> Player1Controllers;
-	private List<AvatarController> Player2Controllers;
-	
-	// ì‚¬ìš©ì ë§µ vars.
-	private Texture2D usersLblTex;
-	private Color32[] usersMapColors;
-	private ushort[] usersPrevState;
-	private Rect usersMapRect;
-	private int usersMapSize;
+        »óÅÂ °ü¸®:
+            ¾Æ¹ÙÅ¸ÀÇ »óÅÂ¸¦ °ü¸®ÇÏ¸ç, ¾Æ¹ÙÅ¸ÀÇ À§Ä¡, È¸Àü, ¹× ½ºÄÌ·¹ÅæÀ» ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+            »ç¿ëÀÚ¿ÍÀÇ »óÈ£ÀÛ¿ëÀ» À§ÇÑ ´Ù¾çÇÑ ¼³Á¤À» Á¦°øÇÕ´Ï´Ù.
 
-	private Texture2D usersClrTex;
-	// Color [] usersclrcolors;
-	private Rect usersClrRect;
-	
-	// ì§§ì€ [] userlabelmap;
-	private ushort[] usersDepthMap;
-	private float[] usersHistogramMap;
-	
-	// ëª¨ë“  ì‚¬ìš©ì ëª©ë¡
-	private List<uint> allUsers;
-	
-	// Kinectì˜ ì´ë¯¸ì§€ ìŠ¤íŠ¸ë¦¼ í•¸ë“¤
-	private IntPtr colorStreamHandle;
-	private IntPtr depthStreamHandle;
-	
-	// ì‚¬ìš©í•˜ëŠ” ê²½ìš° ìƒ‰ìƒ ì´ë¯¸ì§€ ë°ì´í„°
-	private Color32[] colorImage;
-	private byte[] usersColorMap;
-	
-	// ê³¨ê²© ê´€ë ¨ êµ¬ì¡°
-	private KinectWrapper.NuiSkeletonFrame skeletonFrame;
-	private KinectWrapper.NuiTransformSmoothParameters smoothParameters;
-	private int player1Index, player2Index;
-	
-	// ê³¨ê²© ì¶”ì  ìƒíƒœ, ìœ„ì¹˜ ë° ê´€ì ˆ ë°©í–¥
-	private Vector3 player1Pos, player2Pos;
-	private Matrix4x4 player1Ori, player2Ori;
-	private bool[] player1JointsTracked, player2JointsTracked;
-	private bool[] player1PrevTracked, player2PrevTracked;
-	private Vector3[] player1JointsPos, player2JointsPos;
-	private Matrix4x4[] player1JointsOri, player2JointsOri;
-	private KinectWrapper.NuiSkeletonBoneOrientation[] jointOrientations;
-	
-	// ê° í”Œë ˆì´ì–´ì˜ êµì • ì œìŠ¤ì²˜ ë°ì´í„°
-	private KinectGestures.GestureData player1CalibrationData;
-	private KinectGestures.GestureData player2CalibrationData;
-	
-	// ê° í”Œë ˆì´ì–´ì— ëŒ€í•œ ì œìŠ¤ì²˜ ë°ì´í„° ëª©ë¡
-	private List<KinectGestures.GestureData> player1Gestures = new List<KinectGestures.GestureData>();
-	private List<KinectGestures.GestureData> player2Gestures = new List<KinectGestures.GestureData>();
-	
-	// ì¼ë°˜ ì œìŠ¤ì²˜ ì¶”ì  ì‹œê°„ ì‹œì‘
-	private float[] gestureTrackingAtTime;
-	
-	// ì œìŠ¤ì²˜ ì²­ì·¨ì ëª©ë¡.
-    // kinectustures.gesturelistenerinterfaceë¥¼ êµ¬í˜„í•´ì•¼í•©ë‹ˆë‹¤
-	public List<KinectGestures.GestureListenerInterface> gestureListeners;
-	
-	private Matrix4x4 kinectToWorld, flipMatrix;
-	private static KinectManager instance;
-	
-    // í•„í„° LERP ë¸”ë Œë“œë¥¼ ì œì–´í•˜ê¸°ìœ„í•œ íƒ€ì´ë¨¸.
+    Å¬·¡½º ±¸¼º ¿ä¼Ò
+        º¯¼ö:
+            ´Ù¾çÇÑ ¼³Á¤À» À§ÇÑ °ø°³ ¹× ºñ°ø°³ º¯¼öµéÀÌ Á¤ÀÇµÇ¾î ÀÖÀ¸¸ç,
+            ÀÌ¸¦ ÅëÇØ Kinect »ç¿ëÀÚÀÇ ¼ö, ½ºÄÌ·¹Åæ µ¥ÀÌÅÍ Ã³¸® ¹æ½Ä, GUI Ç¥½Ã ¿©ºÎ µîÀ» Á¶Á¤ÇÒ ¼ö ÀÖ½À´Ï´Ù.
+
+        ¸Ş¼Òµå:
+            Kinect ÃÊ±âÈ­, ½ºÄÌ·¹Åæ µ¥ÀÌÅÍ Ã³¸®, Á¦½ºÃ³ °¨Áö ¹× ¾÷µ¥ÀÌÆ®ÇÏ´Â ¿©·¯ ¸Ş¼ÒµåµéÀÌ Æ÷ÇÔµÇ¾î ÀÖ½À´Ï´Ù.
+            ÁÖ¿ä ¸Ş¼Òµå´Â Awake(), Update(), ProcessSkeleton(), UpdateUserMap(), DetectGesture() µîÀÔ´Ï´Ù.
+
+        ½Ì±ÛÅæ ÆĞÅÏ:
+            KinectManager Å¬·¡½º´Â ½Ì±ÛÅæ ÆĞÅÏÀ¸·Î ±¸ÇöµÇ¾î ÀÖ¾î, Å¬·¡½ºÀÇ ÀÎ½ºÅÏ½º°¡ ÇÏ³ª¸¸ Á¸ÀçÇÏµµ·Ï º¸ÀåÇÕ´Ï´Ù.
+            ÀÌ¸¦ ÅëÇØ Àü¿ªÀûÀ¸·Î KinectManager¿¡ Á¢±ÙÇÒ ¼ö ÀÖ½À´Ï´Ù.
+
+    ÀÌ Å¬·¡½º´Â Kinect ¼¾¼­¸¦ ÅëÇØ »ç¿ëÀÚÀÇ ¿òÁ÷ÀÓÀ» ÃßÀûÇÏ°í,
+    ÀÌ¸¦ ±â¹İÀ¸·Î ¾Æ¹ÙÅ¸¸¦ Á¦¾îÇÏ¸ç,
+    Á¦½ºÃ³ ÀÎ½ÄÀ» ÅëÇØ ´Ù¾çÇÑ »óÈ£ÀÛ¿ëÀ» °¡´ÉÇÏ°Ô ÇÏ´Â ÇÙ½É ¿ªÇÒÀ» ÇÕ´Ï´Ù.
+    ÀÌ Å¬·¡½ºÀÇ ±¸Á¶¿Í ¸Ş¼Òµå¸¦ ÀÌÇØÇÔÀ¸·Î½á Kinect ±â¹İ °ÔÀÓÀÌ³ª ¾ÖÇÃ¸®ÄÉÀÌ¼Ç °³¹ß¿¡ ÇÊ¿äÇÑ ´Ù¾çÇÑ ±â´ÉÀ» ±¸ÇöÇÒ ¼ö ÀÖ½À´Ï´Ù.
+    */
+
+
+    // ½º¹«µù ¿É¼ÇÀ» Á¤ÀÇÇÏ´Â ¿­°ÅÇü
+    public enum Smoothing : int { None, Default, Medium, Aggressive }
+
+    // µÎ »ç¿ëÀÚ°¡ ÀÖ´ÂÁö ¿©ºÎ¸¦ ¼³Á¤ÇÏ´Â °ø°³ º¯¼ö
+    public bool TwoUsers = false;
+
+    // »ç¿ëÀÚ ¸ÊÀ» °è»êÇÒ °ÍÀÎÁö ¿©ºÎ¸¦ ¼³Á¤ÇÏ´Â °ø°³ º¯¼ö
+    public bool ComputeUserMap = false;
+
+    // »ö»ó ¸ÊÀ» °è»êÇÒ °ÍÀÎÁö ¿©ºÎ¸¦ ¼³Á¤ÇÏ´Â °ø°³ º¯¼ö
+    public bool ComputeColorMap = false;
+
+    // »ç¿ëÀÚ ¸ÊÀ» GUI¿¡ Ç¥½ÃÇÒ °ÍÀÎÁö ¿©ºÎ¸¦ ¼³Á¤ÇÏ´Â °ø°³ º¯¼ö
+    public bool DisplayUserMap = false;
+
+    // »ö»ó ¸ÊÀ» GUI¿¡ Ç¥½ÃÇÒ °ÍÀÎÁö ¿©ºÎ¸¦ ¼³Á¤ÇÏ´Â °ø°³ º¯¼ö
+    public bool DisplayColorMap = false;
+
+    // »ç¿ëÀÚ ¸Ê¿¡¼­ ½ºÄÌ·¹Åæ ¼±À» Ç¥½ÃÇÒ °ÍÀÎÁö ¿©ºÎ¸¦ ¼³Á¤ÇÏ´Â °ø°³ º¯¼ö
+    public bool DisplaySkeletonLines = false;
+
+    // ÀÌ¹ÌÁöÀÇ ³Êºñ¸¦ ¼³Á¤ÇÏ´Â °ø°³ º¯¼ö (Ä«¸Ş¶ó ³ÊºñÀÇ ºñÀ²·Î)
+    public float DisplayMapsWidthPercent = 20f;
+
+    // ¼¾¼­ÀÇ ³ôÀÌ¸¦ ¼³Á¤ÇÏ´Â °ø°³ º¯¼ö (¹ÌÅÍ ´ÜÀ§)
+    public float SensorHeight = 1.0f;
+
+    // ¼¾¼­ÀÇ ±â¿ï±â °¢µµ¸¦ ¼³Á¤ÇÏ´Â °ø°³ º¯¼ö (µµ ´ÜÀ§)
+    public int SensorAngle = 0;
+
+    // »ç¿ëÀÚ ½ºÄÌ·¹Åæ µ¥ÀÌÅÍ¸¦ Ã³¸®ÇÏ±â À§ÇÑ ÃÖ¼Ò °Å¸®
+    public float MinUserDistance = 1.0f;
+
+    // »ç¿ëÀÚ ½ºÄÌ·¹Åæ µ¥ÀÌÅÍÀÇ ÃÖ´ë °Å¸® (0Àº Á¦ÇÑ ¾øÀ½)
+    public float MaxUserDistance = 0f;
+
+    // °¡Àå °¡±î¿î »ç¿ëÀÚ¸¸ °¨ÁöÇÒÁö ¿©ºÎ¸¦ ¼³Á¤ÇÏ´Â °ø°³ º¯¼ö
+    public bool DetectClosestUser = true;
+
+    // ÃßÁ¤µÈ °üÀıÀ» ¹«½ÃÇÒ °ÍÀÎÁö ¿©ºÎ¸¦ ¼³Á¤ÇÏ´Â °ø°³ º¯¼ö
+    public bool IgnoreInferredJoints = true;
+
+    // ½º¹«µù ¸Å°³º¯¼ö ¼±ÅÃ
+    public Smoothing smoothing = Smoothing.Default;
+
+    // Ãß°¡ ÇÊÅÍ »ç¿ë ¿©ºÎ¸¦ ¼³Á¤ÇÏ´Â °ø°³ º¯¼ö
+    public bool UseBoneOrientationsFilter = false;
+    public bool UseClippedLegsFilter = false;
+    public bool UseBoneOrientationsConstraint = true;
+    public bool UseSelfIntersectionConstraint = false;
+
+    // °¢ ÇÃ·¹ÀÌ¾îÀÇ ¾Æ¹ÙÅ¸¸¦ Á¦¾îÇÒ GameObject ¸®½ºÆ®
+    public List<GameObject> Player1Avatars;
+    public List<GameObject> Player2Avatars;
+
+    // °¢ ÇÃ·¹ÀÌ¾îÀÇ º¸Á¤ Æ÷Áî ¼³Á¤
+    public KinectGestures.Gestures Player1CalibrationPose;
+    public KinectGestures.Gestures Player2CalibrationPose;
+
+    // °¢ ÇÃ·¹ÀÌ¾îÀÇ °¨ÁöÇÒ Á¦½ºÃ³ ¸®½ºÆ®
+    public List<KinectGestures.Gestures> Player1Gestures;
+    public List<KinectGestures.Gestures> Player2Gestures;
+
+    // Á¦½ºÃ³ °¨Áö °£ ÃÖ¼Ò ½Ã°£
+    public float MinTimeBetweenGestures = 0.7f;
+
+    // Á¦½ºÃ³ ¸®½º³Ê ¸®½ºÆ®
+    public List<MonoBehaviour> GestureListeners;
+
+    // GUI ¸Ş½ÃÁö¸¦ Ç¥½ÃÇÒ GUIText
+    public GUIText CalibrationText;
+
+    // ÇÃ·¹ÀÌ¾î 1 ¹× 2ÀÇ ¼Õ Ä¿¼­¸¦ Ç¥½ÃÇÒ GUI Texture
+    public GameObject HandCursor1;
+    public GameObject HandCursor2;
+
+    // ¸¶¿ì½º Ä¿¼­¿Í Å¬¸¯ Á¦½ºÃ³·Î ¸¶¿ì½º Ä¿¼­¸¦ Á¦¾îÇÒÁö ¿©ºÎ
+    public bool ControlMouseCursor = false;
+
+    // Á¦½ºÃ³ µğ¹ö±× ¸Ş½ÃÁö¸¦ Ç¥½ÃÇÒ GUIText
+    public GUIText GesturesDebugText;
+
+    // Kinect ÃÊ±âÈ­ ¿©ºÎ¸¦ ÃßÀûÇÏ´Â ºñ°ø°³ º¯¼ö
+    private bool KinectInitialized = false;
+
+    // º¸Á¤µÈ ÇÃ·¹ÀÌ¾î ÃßÀû ¿©ºÎ¸¦ ÀúÀåÇÏ´Â ºñ°ø°³ º¯¼ö
+    private bool Player1Calibrated = false;
+    private bool Player2Calibrated = false;
+
+    // ¸ğµç ÇÃ·¹ÀÌ¾î°¡ º¸Á¤µÇ¾ú´ÂÁö ¿©ºÎ¸¦ ÀúÀåÇÏ´Â ºñ°ø°³ º¯¼ö
+    private bool AllPlayersCalibrated = false;
+
+    // Player 1 ¹× Player 2ÀÇ ID¸¦ ÀúÀåÇÏ´Â º¯¼ö
+    private uint Player1ID;
+    private uint Player2ID;
+
+    // Player 1 ¹× Player 2ÀÇ ÀÎµ¦½º º¯¼ö
+    private int Player1Index;
+    private int Player2Index;
+
+    // ¾Æ¹ÙÅ¸ ÄÁÆ®·Ñ·¯ ¸®½ºÆ®
+    private List<AvatarController> Player1Controllers;
+    private List<AvatarController> Player2Controllers;
+
+    // »ç¿ëÀÚ ¸Ê °ü·Ã º¯¼ö
+    private Texture2D usersLblTex;
+    private Color32[] usersMapColors;
+    private ushort[] usersPrevState;
+    private Rect usersMapRect;
+    private int usersMapSize;
+
+    // »ö»ó ¸Ê °ü·Ã º¯¼ö
+    private Texture2D usersClrTex;
+    private Rect usersClrRect;
+
+    // »ç¿ëÀÚ ±íÀÌ ¸Ê
+    private ushort[] usersDepthMap;
+    private float[] usersHistogramMap;
+
+    // ¸ğµç »ç¿ëÀÚ ¸®½ºÆ®
+    private List<uint> allUsers;
+
+    // KinectÀÇ ÀÌ¹ÌÁö ½ºÆ®¸² ÇÚµé
+    private IntPtr colorStreamHandle;
+    private IntPtr depthStreamHandle;
+
+    // »ö»ó ÀÌ¹ÌÁö µ¥ÀÌÅÍ
+    private Color32[] colorImage;
+    private byte[] usersColorMap;
+
+    // ½ºÄÌ·¹Åæ °ü·Ã ±¸Á¶Ã¼
+    private KinectWrapper.NuiSkeletonFrame skeletonFrame;
+    private KinectWrapper.NuiTransformSmoothParameters smoothParameters;
+    private int player1Index, player2Index;
+
+    // ÇÃ·¹ÀÌ¾îÀÇ À§Ä¡ ¹× ¹æÇâ
+    private Vector3 player1Pos, player2Pos;
+    private Matrix4x4 player1Ori, player2Ori;
+    private bool[] player1JointsTracked, player2JointsTracked;
+    private bool[] player1PrevTracked, player2PrevTracked;
+    private Vector3[] player1JointsPos, player2JointsPos;
+    private Matrix4x4[] player1JointsOri, player2JointsOri;
+    private KinectWrapper.NuiSkeletonBoneOrientation[] jointOrientations;
+
+    // º¸Á¤ Á¦½ºÃ³ µ¥ÀÌÅÍ
+    private KinectGestures.GestureData player1CalibrationData;
+    private KinectGestures.GestureData player2CalibrationData;
+
+    // Á¦½ºÃ³ µ¥ÀÌÅÍ ¸®½ºÆ®
+    private List<KinectGestures.GestureData> player1Gestures = new List<KinectGestures.GestureData>();
+    private List<KinectGestures.GestureData> player2Gestures = new List<KinectGestures.GestureData>();
+
+    // Á¦½ºÃ³ ÃßÀû ½ÃÀÛ ½Ã°£
+    private float[] gestureTrackingAtTime;
+
+    // Á¦½ºÃ³ ¸®½º³Ê ¸®½ºÆ®
+    public List<KinectGestures.GestureListenerInterface> gestureListeners;
+
+    // Kinect °ø°£¿¡¼­ ¿ùµå °ø°£À¸·Î º¯È¯ÇÏ´Â ¸ÅÆ®¸¯½º
+    private Matrix4x4 kinectToWorld, flipMatrix;
+    private static KinectManager instance;
+
+    // ÇÊÅÍ¸µ°ú °ü·ÃµÈ Å¸ÀÌ¸Ó
     private float lastNuiTime;
 
-	// í•„í„°
-	private TrackingStateFilter[] trackingStateFilter;
-	private BoneOrientationsFilter[] boneOrientationFilter;
-	private ClippedLegsFilter[] clippedLegsFilter;
-	private BoneOrientationsConstraint boneConstraintsFilter;
-	private SelfIntersectionConstraint selfIntersectionConstraint;
-	
-	
-	// ë‹¨ì¼ KinectManager ì¸ìŠ¤í„´ìŠ¤ë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤
+    // ÇÊÅÍ º¯¼ö
+    private TrackingStateFilter[] trackingStateFilter;
+    private BoneOrientationsFilter[] boneOrientationFilter;
+    private ClippedLegsFilter[] clippedLegsFilter;
+    private BoneOrientationsConstraint boneConstraintsFilter;
+    private SelfIntersectionConstraint selfIntersectionConstraint;
+
+    // ½Ì±ÛÅæ ÀÎ½ºÅÏ½º¸¦ ¹İÈ¯
     public static KinectManager Instance
     {
         get
@@ -199,1979 +244,2028 @@ public class KinectManager : MonoBehaviour
             return instance;
         }
     }
-	
-	// Kinectê°€ ì´ˆê¸°í™”ë˜ê³  ì‚¬ìš©í•  ì¤€ë¹„ê°€ë˜ì—ˆëŠ”ì§€ í™•ì¸í•©ë‹ˆë‹¤.
-    // ê·¸ë ‡ì§€ ì•Šì€ ê²½ìš° Kinect-Sensor ì´ˆê¸°í™” ì¤‘ì— ì˜¤ë¥˜ê°€ ë°œìƒí–ˆìŠµë‹ˆë‹¤
-	public static bool IsKinectInitialized()
-	{
-		return instance != null ? instance.KinectInitialized : false;
-	}
-	
-	// Kinectê°€ ì´ˆê¸°í™”ë˜ê³  ì‚¬ìš©í•  ì¤€ë¹„ê°€ë˜ì—ˆëŠ”ì§€ í™•ì¸í•©ë‹ˆë‹¤.
-    // ê·¸ë ‡ì§€ ì•Šì€ ê²½ìš° Kinect-Sensor ì´ˆê¸°í™” ì¤‘ì— ì˜¤ë¥˜ê°€ ë°œìƒí–ˆìŠµë‹ˆë‹¤
-	public bool IsInitialized()
-	{
-		return KinectInitialized;
-	}
-	
-	// ì´ ê¸°ëŠ¥ì€ AvatarControllerì—ì„œ ë‚´ë¶€ì ìœ¼ë¡œ ì‚¬ìš©ë©ë‹ˆë‹¤
-	public static bool IsCalibrationNeeded()
-	{
-		return false;
-	}
-	
-	// ComputeUsermapì´ ì°¸ì´ë©´ ì›ì‹œ ê¹Šì´/ì‚¬ìš©ì ë°ì´í„°ë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤
-	public ushort[] GetRawDepthMap()
-	{
-		return usersDepthMap;
-	}
-	
-	// ComputeUsermapì´ true ì¸ ê²½ìš° íŠ¹ì • í”½ì…€ì˜ ê¹Šì´ ë°ì´í„°ë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤.
-	public ushort GetDepthForPixel(int x, int y)
-	{
-		int index = y * KinectWrapper.Constants.DepthImageWidth + x;
-		
-		if(index >= 0 && index < usersDepthMap.Length)
-			return usersDepthMap[index];
-		else
-			return 0;
-	}
-	
-	// 3D ì¡°ì¸íŠ¸ ìœ„ì¹˜ì— ëŒ€í•œ ê¹Šì´ ë§µ ìœ„ì¹˜ë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤.
-	public Vector2 GetDepthMapPosForJointPos(Vector3 posJoint)
-	{
-		Vector3 vDepthPos = KinectWrapper.MapSkeletonPointToDepthPoint(posJoint);
-		Vector2 vMapPos = new Vector2(vDepthPos.x, vDepthPos.y);
-		
-		return vMapPos;
-	}
-	
-	// ê¹Šì´ 2D ìœ„ì¹˜ì˜ ì»¬ëŸ¬ ë§µ ìœ„ì¹˜ë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤.
-	public Vector2 GetColorMapPosForDepthPos(Vector2 posDepth)
-	{
-		int cx, cy;
 
-		KinectWrapper.NuiImageViewArea pcViewArea = new KinectWrapper.NuiImageViewArea 
-		{
+    // Kinect°¡ ÃÊ±âÈ­µÇ¾ú´ÂÁö È®ÀÎ
+    public static bool IsKinectInitialized()
+    {
+        return instance != null ? instance.KinectInitialized : false;
+    }
+
+    // Kinect°¡ ÃÊ±âÈ­µÇ¾ú´ÂÁö È®ÀÎ
+    public bool IsInitialized()
+    {
+        return KinectInitialized;
+    }
+
+    // ³»ºÎÀûÀ¸·Î AvatarController¿¡ ÀÇÇØ »ç¿ëµÇ´Â ÇÔ¼ö
+    public static bool IsCalibrationNeeded()
+    {
+        return false;
+    }
+
+    // ¿ø½Ã ±íÀÌ/»ç¿ëÀÚ µ¥ÀÌÅÍ¸¦ ¹İÈ¯ (ComputeUserMapÀÌ trueÀÏ ¶§)
+    /// <summary>
+    /// GetRawDepthMap ¸Ş¼Òµå´Â ¿ø½Ã ±íÀÌ/»ç¿ëÀÚ µ¥ÀÌÅÍ¸¦ ¹İÈ¯ÇÕ´Ï´Ù.
+    /// ComputeUserMapÀÌ trueÀÏ ¶§¸¸ À¯È¿ÇÕ´Ï´Ù.
+    /// </summary>
+    /// <returns>¿ø½Ã ±íÀÌ µ¥ÀÌÅÍ ¹è¿­</returns>
+    public ushort[] GetRawDepthMap()
+    {
+        return usersDepthMap;
+    }
+
+    // Æ¯Á¤ ÇÈ¼¿¿¡ ´ëÇÑ ±íÀÌ µ¥ÀÌÅÍ¸¦ ¹İÈ¯ (ComputeUserMapÀÌ trueÀÏ ¶§)
+    /// <summary>
+    /// GetDepthForPixel ¸Ş¼Òµå´Â Æ¯Á¤ ÇÈ¼¿¿¡ ´ëÇÑ ±íÀÌ µ¥ÀÌÅÍ¸¦ ¹İÈ¯ÇÕ´Ï´Ù.
+    /// ComputeUserMapÀÌ trueÀÏ ¶§¸¸ À¯È¿ÇÕ´Ï´Ù.
+    /// </summary>
+    /// <param name="x">ÇÈ¼¿ÀÇ xÁÂÇ¥</param>
+    /// <param name="y">ÇÈ¼¿ÀÇ yÁÂÇ¥</param>
+    /// <returns>ÁÖ¾îÁø ÇÈ¼¿ÀÇ ±íÀÌ °ª</returns>
+    public ushort GetDepthForPixel(int x, int y)
+    {
+        int index = y * KinectWrapper.Constants.DepthImageWidth + x;
+
+        if (index >= 0 && index < usersDepthMap.Length)
+            return usersDepthMap[index];
+        else
+            return 0;
+    }
+
+    // 3D °üÀı À§Ä¡¿¡ ´ëÇÑ ±íÀÌ ¸Ê À§Ä¡¸¦ ¹İÈ¯
+    public Vector2 GetDepthMapPosForJointPos(Vector3 posJoint)
+    {
+        Vector3 vDepthPos = KinectWrapper.MapSkeletonPointToDepthPoint(posJoint);
+        Vector2 vMapPos = new Vector2(vDepthPos.x, vDepthPos.y);
+
+        return vMapPos;
+    }
+
+    // ±íÀÌ 2D À§Ä¡¿¡ ´ëÇÑ »ö»ó ¸Ê À§Ä¡¸¦ ¹İÈ¯
+    public Vector2 GetColorMapPosForDepthPos(Vector2 posDepth)
+    {
+        int cx, cy;
+
+        // ÀÓ½Ã ±¸Á¶Ã¼ »ı¼º
+        KinectWrapper.NuiImageViewArea pcViewArea = new KinectWrapper.NuiImageViewArea
+        {
             eDigitalZoom = 0,
             lCenterX = 0,
             lCenterY = 0
         };
-		
-		KinectWrapper.NuiImageGetColorPixelCoordinatesFromDepthPixelAtResolution(
-			KinectWrapper.Constants.ColorImageResolution,
-			KinectWrapper.Constants.DepthImageResolution,
-			ref pcViewArea,
-			(int)posDepth.x, (int)posDepth.y, GetDepthForPixel((int)posDepth.x, (int)posDepth.y),
-			out cx, out cy);
-		
-		return new Vector2(cx, cy);
-	}
-	
-	// ComputeUsermapì´ ì‚¬ì‹¤ ì¸ ê²½ìš° ê¹Šì´ ì´ë¯¸ì§€/ì‚¬ìš©ì íˆìŠ¤í† ê·¸ë¨ í…ìŠ¤ì²˜ë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤
+
+        // ±íÀÌ ÇÈ¼¿·ÎºÎÅÍ »ö»ó ÇÈ¼¿ ÁÂÇ¥¸¦ °¡Á®¿È
+        KinectWrapper.NuiImageGetColorPixelCoordinatesFromDepthPixelAtResolution(
+            KinectWrapper.Constants.ColorImageResolution,
+            KinectWrapper.Constants.DepthImageResolution,
+            ref pcViewArea,
+            (int)posDepth.x, (int)posDepth.y, GetDepthForPixel((int)posDepth.x, (int)posDepth.y),
+            out cx, out cy);
+
+        return new Vector2(cx, cy);
+    }
+
+    // »ç¿ëÀÚ ·¹ÀÌºí ÅØ½ºÃ³ ¹İÈ¯ (ComputeUserMapÀÌ trueÀÏ ¶§)
     public Texture2D GetUsersLblTex()
-    { 
-		return usersLblTex;
-	}
-	
-	// CompuTeColormapì´ ì‚¬ì‹¤ ì¸ ê²½ìš° ìƒ‰ìƒ ì´ë¯¸ì§€ í…ìŠ¤ì²˜ë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤
+    {
+        return usersLblTex;
+    }
+
+    // »ç¿ëÀÚ »ö»ó ÅØ½ºÃ³ ¹İÈ¯ (ComputeColorMapÀÌ trueÀÏ ¶§)
     public Texture2D GetUsersClrTex()
-    { 
-		return usersClrTex;
-	}
-	
-	// í•œ ëª… ì´ìƒì˜ ì‚¬ìš©ìê°€ í˜„ì¬ ì„¼ì„œì— ì˜í•´ ê°ì§€ë˜ë©´ trueë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤.
-	public bool IsUserDetected()
-	{
-		return KinectInitialized && (allUsers.Count > 0);
-	}
-	
-	// Player1ì˜ userIdë¥¼ ë°˜í™˜í•˜ê±°ë‚˜ Player1ì´ ê°ì§€ë˜ì§€ ì•Šì€ ê²½ìš° 0
-	public uint GetPlayer1ID()
-	{
-		return Player1ID;
-	}
-	
-	// Player2ì˜ userIdë¥¼ ë°˜í™˜í•˜ê±°ë‚˜ Player2ê°€ ê°ì§€ë˜ì§€ ì•Šì€ ê²½ìš° 0
-	public uint GetPlayer2ID()
-	{
-		return Player2ID;
-	}
-	
-	// Player1ì˜ ìƒ‰ì¸ì„ ë°˜í™˜í•˜ê±°ë‚˜ Player2ê°€ ê°ì§€ë˜ì§€ ì•Šì€ ê²½ìš° 0
-	public int GetPlayer1Index()
-	{
-		return Player1Index;
-	}
-	
-	// Player2ì˜ ì¸ë±ìŠ¤ë¥¼ ë°˜í™˜í•˜ê±°ë‚˜ Player2ê°€ ê°ì§€ë˜ì§€ ì•Šì€ ê²½ìš° 0
-	public int GetPlayer2Index()
-	{
-		return Player2Index;
-	}
-	
-	// ì‚¬ìš©ìê°€ ë³´ì •ë˜ê³  ì‚¬ìš©í•  ì¤€ë¹„ê°€ë˜ë©´ Trueë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤.
-	public bool IsPlayerCalibrated(uint UserId)
-	{
-		if(UserId == Player1ID)
-			return Player1Calibrated;
-		else if(UserId == Player2ID)
-			return Player2Calibrated;
-		
-		return false;
-	}
-	
-	// Kinect ì„¼ì„œê°€ ë°˜í™˜ í•œ ì›ì‹œ ë³€í˜• ì¡°ì¸íŠ¸ ìœ„ì¹˜ë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤.
-	public Vector3 GetRawSkeletonJointPos(uint UserId, int joint)
-	{
-		if(UserId == Player1ID)
-			return joint >= 0 && joint < player1JointsPos.Length ? (Vector3)skeletonFrame.SkeletonData[player1Index].SkeletonPositions[joint] : Vector3.zero;
-		else if(UserId == Player2ID)
-			return joint >= 0 && joint < player2JointsPos.Length ? (Vector3)skeletonFrame.SkeletonData[player2Index].SkeletonPositions[joint] : Vector3.zero;
-		
-		return Vector3.zero;
-	}
-	
-	// Kinect-Sensorì— ëŒ€í•´ ì‚¬ìš©ì ìœ„ì¹˜ë¥¼ ë¯¸í„°ë¡œ ë°˜í™˜í•©ë‹ˆë‹¤.
-	public Vector3 GetUserPosition(uint UserId)
-	{
-		if(UserId == Player1ID)
-			return player1Pos;
-		else if(UserId == Player2ID)
-			return player2Pos;
-		
-		return Vector3.zero;
-	}
-	
-	// Kinect-Sensorì— ëŒ€í•œ ì‚¬ìš©ì íšŒì „ì„ ë°˜í™˜í•©ë‹ˆë‹¤
-	public Quaternion GetUserOrientation(uint UserId, bool flip)
-	{
-		if(UserId == Player1ID && player1JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.HipCenter])
-			return ConvertMatrixToQuat(player1Ori, (int)KinectWrapper.NuiSkeletonPositionIndex.HipCenter, flip);
-		else if(UserId == Player2ID && player2JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.HipCenter])
-			return ConvertMatrixToQuat(player2Ori, (int)KinectWrapper.NuiSkeletonPositionIndex.HipCenter, flip);
-		
-		return Quaternion.identity;
-	}
-	
-	// ì§€ì •ëœ ì‚¬ìš©ìì˜ ì£¼ì–´ì§„ ì¡°ì¸íŠ¸ê°€ ì¶”ì ë˜ëŠ” ê²½ìš° trueë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤.
-	public bool IsJointTracked(uint UserId, int joint)
-	{
-		if(UserId == Player1ID)
-			return joint >= 0 && joint < player1JointsTracked.Length ? player1JointsTracked[joint] : false;
-		else if(UserId == Player2ID)
-			return joint >= 0 && joint < player2JointsTracked.Length ? player2JointsTracked[joint] : false;
-		
-		return false;
-	}
-	
-	// Kinect-Sensorì™€ ê´€ë ¨í•˜ì—¬ ì§€ì •ëœ ì‚¬ìš©ìì˜ ê³µë™ ìœ„ì¹˜ë¥¼ ë¯¸í„°ë¡œ ë°˜í™˜í•©ë‹ˆë‹¤.
-	public Vector3 GetJointPosition(uint UserId, int joint)
-	{
-		if(UserId == Player1ID)
-			return joint >= 0 && joint < player1JointsPos.Length ? player1JointsPos[joint] : Vector3.zero;
-		else if(UserId == Player2ID)
-			return joint >= 0 && joint < player2JointsPos.Length ? player2JointsPos[joint] : Vector3.zero;
-		
-		return Vector3.zero;
-	}
-	
-	// ì§€ì •ëœ ì‚¬ìš©ìì˜ ë¡œì»¬ ì¡°ì¸íŠ¸ ìœ„ì¹˜ë¥¼ ëª¨ê¸° ê´€ì ˆì— ë¹„í•´ ë¯¸í„°ë¡œ ë°˜í™˜í•©ë‹ˆë‹¤.
-	public Vector3 GetJointLocalPosition(uint UserId, int joint)
-	{
+    {
+        return usersClrTex;
+    }
+
+    // ÃÖ¼ÒÇÑ ÇÏ³ªÀÇ »ç¿ëÀÚ°¡ °¨ÁöµÇ¾ú´ÂÁö È®ÀÎ
+    /// <summary>
+    /// IsUserDetected ¸Ş¼Òµå´Â ÃÖ¼ÒÇÑ ÇÏ³ªÀÇ »ç¿ëÀÚ°¡ °¨ÁöµÇ¾ú´ÂÁö È®ÀÎÇÕ´Ï´Ù.
+    /// </summary>
+    /// <returns>»ç¿ëÀÚ°¡ °¨ÁöµÇ¾úÀ¸¸é true, ±×·¸Áö ¾ÊÀ¸¸é false</returns>
+    public bool IsUserDetected()
+    {
+        return KinectInitialized && (allUsers.Count > 0);
+    }
+
+    // Player1ÀÇ UserID¸¦ ¹İÈ¯ (°¨ÁöµÇÁö ¾ÊÀ¸¸é 0)
+    /// <summary>
+    /// GetPlayer1ID ¸Ş¼Òµå´Â Player 1ÀÇ UserID¸¦ ¹İÈ¯ÇÕ´Ï´Ù.
+    /// </summary>
+    /// <returns>Player 1ÀÇ UserID ¶Ç´Â 0 (°¨ÁöµÇÁö ¾ÊÀ¸¸é)</returns>
+    public uint GetPlayer1ID()
+    {
+        return Player1ID;
+    }
+
+    // Player2ÀÇ UserID¸¦ ¹İÈ¯ (°¨ÁöµÇÁö ¾ÊÀ¸¸é 0)
+    /// <summary>
+    /// GetPlayer2ID ¸Ş¼Òµå´Â Player 2ÀÇ UserID¸¦ ¹İÈ¯ÇÕ´Ï´Ù.
+    /// </summary>
+    /// <returns>Player 2ÀÇ UserID ¶Ç´Â 0 (°¨ÁöµÇÁö ¾ÊÀ¸¸é)</returns>
+    public uint GetPlayer2ID()
+    {
+        return Player2ID;
+    }
+
+    // Player1ÀÇ ÀÎµ¦½º¸¦ ¹İÈ¯ (°¨ÁöµÇÁö ¾ÊÀ¸¸é 0)
+    public int GetPlayer1Index()
+    {
+        return Player1Index;
+    }
+
+    // Player2ÀÇ ÀÎµ¦½º¸¦ ¹İÈ¯ (°¨ÁöµÇÁö ¾ÊÀ¸¸é 0)
+    public int GetPlayer2Index()
+    {
+        return Player2Index;
+    }
+
+    // ÁÖ¾îÁø UserIdÀÇ »ç¿ëÀÚ°¡ º¸Á¤µÇ¾ú´ÂÁö ¿©ºÎ¸¦ ¹İÈ¯
+    /// <summary>
+    /// IsPlayerCalibrated ¸Ş¼Òµå´Â ÁÖ¾îÁø »ç¿ëÀÚ°¡ º¸Á¤µÇ¾ú´ÂÁö È®ÀÎÇÕ´Ï´Ù.
+    /// </summary>
+    /// <param name="UserId">»ç¿ëÀÚÀÇ ID</param>
+    /// <returns>»ç¿ëÀÚ°¡ º¸Á¤µÇ¾úÀ¸¸é true, ±×·¸Áö ¾ÊÀ¸¸é false</returns>
+    public bool IsPlayerCalibrated(uint UserId)
+    {
+        if (UserId == Player1ID)
+            return Player1Calibrated;
+        else if (UserId == Player2ID)
+            return Player2Calibrated;
+
+        return false;
+    }
+
+    // ¿ø½Ã ºñ¼öÁ¤ °üÀı À§Ä¡¸¦ ¹İÈ¯ (Kinect ¼¾¼­¿¡¼­ ¹İÈ¯µÈ ´ë·Î)
+    public Vector3 GetRawSkeletonJointPos(uint UserId, int joint)
+    {
+        if (UserId == Player1ID)
+            return joint >= 0 && joint < player1JointsPos.Length ? (Vector3)skeletonFrame.SkeletonData[player1Index].SkeletonPositions[joint] : Vector3.zero;
+        else if (UserId == Player2ID)
+            return joint >= 0 && joint < player2JointsPos.Length ? (Vector3)skeletonFrame.SkeletonData[player2Index].SkeletonPositions[joint] : Vector3.zero;
+
+        return Vector3.zero;
+    }
+
+    // »ç¿ëÀÚÀÇ À§Ä¡¸¦ ¹İÈ¯ (Kinect ¼¾¼­¿¡ »ó´ëÀû, ¹ÌÅÍ ´ÜÀ§)
+    /// <summary>
+    /// GetUserPosition ¸Ş¼Òµå´Â ÁÖ¾îÁø »ç¿ëÀÚÀÇ À§Ä¡¸¦ ¹İÈ¯ÇÕ´Ï´Ù.
+    /// </summary>
+    /// <param name="UserId">»ç¿ëÀÚÀÇ ID</param>
+    /// <returns>»ç¿ëÀÚÀÇ À§Ä¡(Vector3)</returns>
+    public Vector3 GetUserPosition(uint UserId)
+    {
+        if (UserId == Player1ID)
+            return player1Pos;
+        else if (UserId == Player2ID)
+            return player2Pos;
+
+        return Vector3.zero;
+    }
+
+    // »ç¿ëÀÚÀÇ È¸ÀüÀ» ¹İÈ¯ (Kinect ¼¾¼­¿¡ »ó´ëÀû)
+    public Quaternion GetUserOrientation(uint UserId, bool flip)
+    {
+        if (UserId == Player1ID && player1JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.HipCenter])
+            return ConvertMatrixToQuat(player1Ori, (int)KinectWrapper.NuiSkeletonPositionIndex.HipCenter, flip);
+        else if (UserId == Player2ID && player2JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.HipCenter])
+            return ConvertMatrixToQuat(player2Ori, (int)KinectWrapper.NuiSkeletonPositionIndex.HipCenter, flip);
+
+        return Quaternion.identity;
+    }
+
+    // Æ¯Á¤ °üÀıÀÌ ÃßÀûµÇ°í ÀÖ´ÂÁö ¿©ºÎ¸¦ ¹İÈ¯
+    public bool IsJointTracked(uint UserId, int joint)
+    {
+        if (UserId == Player1ID)
+            return joint >= 0 && joint < player1JointsTracked.Length ? player1JointsTracked[joint] : false;
+        else if (UserId == Player2ID)
+            return joint >= 0 && joint < player2JointsTracked.Length ? player2JointsTracked[joint] : false;
+
+        return false;
+    }
+
+    // Æ¯Á¤ »ç¿ëÀÚÀÇ °üÀı À§Ä¡¸¦ ¹İÈ¯ (Kinect ¼¾¼­¿¡ »ó´ëÀû, ¹ÌÅÍ ´ÜÀ§)
+    public Vector3 GetJointPosition(uint UserId, int joint)
+    {
+        if (UserId == Player1ID)
+            return joint >= 0 && joint < player1JointsPos.Length ? player1JointsPos[joint] : Vector3.zero;
+        else if (UserId == Player2ID)
+            return joint >= 0 && joint < player2JointsPos.Length ? player2JointsPos[joint] : Vector3.zero;
+
+        return Vector3.zero;
+    }
+
+    // ºÎ¸ğ °üÀı¿¡ ´ëÇÑ °üÀıÀÇ Áö¿ª À§Ä¡¸¦ ¹İÈ¯ (Kinect ¼¾¼­¿¡ »ó´ëÀû, ¹ÌÅÍ ´ÜÀ§)
+    public Vector3 GetJointLocalPosition(uint UserId, int joint)
+    {
         int parent = KinectWrapper.GetSkeletonJointParent(joint);
 
-		if(UserId == Player1ID)
-			return joint >= 0 && joint < player1JointsPos.Length ? 
-				(player1JointsPos[joint] - player1JointsPos[parent]) : Vector3.zero;
-		else if(UserId == Player2ID)
-			return joint >= 0 && joint < player2JointsPos.Length ? 
-				(player2JointsPos[joint] - player2JointsPos[parent]) : Vector3.zero;
-		
-		return Vector3.zero;
-	}
-	
-	// Kinect-Sensorì™€ ê´€ë ¨í•˜ì—¬ ì§€ì •ëœ ì‚¬ìš©ìì˜ ê³µë™ íšŒì „ì„ ë°˜í™˜í•©ë‹ˆë‹¤.
-	public Quaternion GetJointOrientation(uint UserId, int joint, bool flip)
-	{
-		if(UserId == Player1ID)
-		{
-			if(joint >= 0 && joint < player1JointsOri.Length && player1JointsTracked[joint])
-				return ConvertMatrixToQuat(player1JointsOri[joint], joint, flip);
-		}
-		else if(UserId == Player2ID)
-		{
-			if(joint >= 0 && joint < player2JointsOri.Length && player2JointsTracked[joint])
-				return ConvertMatrixToQuat(player2JointsOri[joint], joint, flip);
-		}
-		
-		return Quaternion.identity;
-	}
-	
-	// ë¶€ëª¨ ì¡°ì¸íŠ¸ì™€ ê´€ë ¨í•˜ì—¬ ì§€ì •ëœ ì‚¬ìš©ìì˜ ê³µë™ íšŒì „ì„ ë°˜í™˜í•©ë‹ˆë‹¤.
-	public Quaternion GetJointLocalOrientation(uint UserId, int joint, bool flip)
-	{
+        if (UserId == Player1ID)
+            return joint >= 0 && joint < player1JointsPos.Length ?
+                (player1JointsPos[joint] - player1JointsPos[parent]) : Vector3.zero;
+        else if (UserId == Player2ID)
+            return joint >= 0 && joint < player2JointsPos.Length ?
+                (player2JointsPos[joint] - player2JointsPos[parent]) : Vector3.zero;
+
+        return Vector3.zero;
+    }
+
+    // Æ¯Á¤ °üÀıÀÇ È¸ÀüÀ» ¹İÈ¯ (Kinect ¼¾¼­¿¡ »ó´ëÀû)
+    public Quaternion GetJointOrientation(uint UserId, int joint, bool flip)
+    {
+        if (UserId == Player1ID)
+        {
+            if (joint >= 0 && joint < player1JointsOri.Length && player1JointsTracked[joint])
+                return ConvertMatrixToQuat(player1JointsOri[joint], joint, flip);
+        }
+        else if (UserId == Player2ID)
+        {
+            if (joint >= 0 && joint < player2JointsOri.Length && player2JointsTracked[joint])
+                return ConvertMatrixToQuat(player2JointsOri[joint], joint, flip);
+        }
+
+        return Quaternion.identity;
+    }
+
+    // Æ¯Á¤ °üÀıÀÇ Áö¿ª È¸ÀüÀ» ¹İÈ¯ (ºÎ¸ğ °üÀı¿¡ »ó´ëÀû)
+    public Quaternion GetJointLocalOrientation(uint UserId, int joint, bool flip)
+    {
         int parent = KinectWrapper.GetSkeletonJointParent(joint);
 
-		if(UserId == Player1ID)
-		{
-			if(joint >= 0 && joint < player1JointsOri.Length && player1JointsTracked[joint])
-			{
-				Matrix4x4 localMat = (player1JointsOri[parent].inverse * player1JointsOri[joint]);
-				return Quaternion.LookRotation(localMat.GetColumn(2), localMat.GetColumn(1));
-			}
-		}
-		else if(UserId == Player2ID)
-		{
-			if(joint >= 0 && joint < player2JointsOri.Length && player2JointsTracked[joint])
-			{
-				Matrix4x4 localMat = (player2JointsOri[parent].inverse * player2JointsOri[joint]);
-				return Quaternion.LookRotation(localMat.GetColumn(2), localMat.GetColumn(1));
-			}
-		}
-		
-		return Quaternion.identity;
-	}
-	
-	// ì§€ì •ëœ ì‚¬ìš©ìë¥¼ ìœ„í•´ BaseJointì™€ NextJoint ì‚¬ì´ì˜ ë°©í–¥ì„ ë°˜í™˜í•©ë‹ˆë‹¤.
-	public Vector3 GetDirectionBetweenJoints(uint UserId, int baseJoint, int nextJoint, bool flipX, bool flipZ)
-	{
-		Vector3 jointDir = Vector3.zero;
-		
-		if(UserId == Player1ID)
-		{
-			if(baseJoint >= 0 && baseJoint < player1JointsPos.Length && player1JointsTracked[baseJoint] &&
-				nextJoint >= 0 && nextJoint < player1JointsPos.Length && player1JointsTracked[nextJoint])
-			{
-				jointDir = player1JointsPos[nextJoint] - player1JointsPos[baseJoint];
-			}
-		}
-		else if(UserId == Player2ID)
-		{
-			if(baseJoint >= 0 && baseJoint < player2JointsPos.Length && player2JointsTracked[baseJoint] &&
-				nextJoint >= 0 && nextJoint < player2JointsPos.Length && player2JointsTracked[nextJoint])
-			{
-				jointDir = player2JointsPos[nextJoint] - player2JointsPos[baseJoint];
-			}
-		}
-		
-		if(jointDir != Vector3.zero)
-		{
-			if(flipX)
-				jointDir.x = -jointDir.x;
-			
-			if(flipZ)
-				jointDir.z = -jointDir.z;
-		}
-		
-		return jointDir;
-	}
-	
-	// ì§€ì •ëœ ì‚¬ìš©ìë¥¼ìœ„í•œ ê°ì§€ ëœ ì œìŠ¤ì²˜ ëª©ë¡ì— ì œìŠ¤ì²˜ë¥¼ ì¶”ê°€í•©ë‹ˆë‹¤.
-	public void DetectGesture(uint UserId, KinectGestures.Gestures gesture)
-	{
-		int index = GetGestureIndex(UserId, gesture);
-		if(index >= 0)
-			DeleteGesture(UserId, gesture);
-		
-		KinectGestures.GestureData gestureData = new KinectGestures.GestureData();
-		
-		gestureData.userId = UserId;
-		gestureData.gesture = gesture;
-		gestureData.state = 0;
-		gestureData.joint = 0;
-		gestureData.progress = 0f;
-		gestureData.complete = false;
-		gestureData.cancelled = false;
-		
-		gestureData.checkForGestures = new List<KinectGestures.Gestures>();
-		switch(gesture)
-		{
-			case KinectGestures.Gestures.ZoomIn:
-				gestureData.checkForGestures.Add(KinectGestures.Gestures.ZoomOut);
-				gestureData.checkForGestures.Add(KinectGestures.Gestures.Wheel);			
-				break;
+        if (UserId == Player1ID)
+        {
+            if (joint >= 0 && joint < player1JointsOri.Length && player1JointsTracked[joint])
+            {
+                Matrix4x4 localMat = (player1JointsOri[parent].inverse * player1JointsOri[joint]);
+                return Quaternion.LookRotation(localMat.GetColumn(2), localMat.GetColumn(1));
+            }
+        }
+        else if (UserId == Player2ID)
+        {
+            if (joint >= 0 && joint < player2JointsOri.Length && player2JointsTracked[joint])
+            {
+                Matrix4x4 localMat = (player2JointsOri[parent].inverse * player2JointsOri[joint]);
+                return Quaternion.LookRotation(localMat.GetColumn(2), localMat.GetColumn(1));
+            }
+        }
 
-			case KinectGestures.Gestures.ZoomOut:
-				gestureData.checkForGestures.Add(KinectGestures.Gestures.ZoomIn);
-				gestureData.checkForGestures.Add(KinectGestures.Gestures.Wheel);			
-				break;
+        return Quaternion.identity;
+    }
 
-			case KinectGestures.Gestures.Wheel:
-				gestureData.checkForGestures.Add(KinectGestures.Gestures.ZoomIn);
-				gestureData.checkForGestures.Add(KinectGestures.Gestures.ZoomOut);			
-				break;
-		}
-		
-		if(UserId == Player1ID)
-			player1Gestures.Add(gestureData);
-		else if(UserId == Player2ID)
-			player2Gestures.Add(gestureData);
-	}
-	
-	// ì§€ì •ëœ ì‚¬ìš©ìì˜ ì£¼ì–´ì§„ ì œìŠ¤ì²˜ì— ëŒ€í•´ ì œìŠ¤ì²˜ ë°ì´í„° ìƒíƒœë¥¼ ì¬ì„¤ì •
-	public bool ResetGesture(uint UserId, KinectGestures.Gestures gesture)
-	{
-		int index = GetGestureIndex(UserId, gesture);
-		if(index < 0)
-			return false;
-		
-		KinectGestures.GestureData gestureData = (UserId == Player1ID) ? player1Gestures[index] : player2Gestures[index];
-		
-		gestureData.state = 0;
-		gestureData.joint = 0;
-		gestureData.progress = 0f;
-		gestureData.complete = false;
-		gestureData.cancelled = false;
-		gestureData.startTrackingAtTime = Time.realtimeSinceStartup + KinectWrapper.Constants.MinTimeBetweenSameGestures;
+    // ±âº» °üÀı°ú ´ÙÀ½ °üÀı °£ÀÇ ¹æÇâÀ» ¹İÈ¯
+    public Vector3 GetDirectionBetweenJoints(uint UserId, int baseJoint, int nextJoint, bool flipX, bool flipZ)
+    {
+        Vector3 jointDir = Vector3.zero;
 
-		if(UserId == Player1ID)
-			player1Gestures[index] = gestureData;
-		else if(UserId == Player2ID)
-			player2Gestures[index] = gestureData;
-		
-		return true;
-	}
-	
-	// ì§€ì •ëœ ì‚¬ìš©ìì˜ ëª¨ë“  ê°ì§€ ëœ ì œìŠ¤ì²˜ì— ëŒ€í•´ ì œìŠ¤ì²˜ ë°ì´í„° ìƒíƒœë¥¼ ì¬ì„¤ì •
-	public void ResetPlayerGestures(uint UserId)
-	{
-		if(UserId == Player1ID)
-		{
-			int listSize = player1Gestures.Count;
-			
-			for(int i = 0; i < listSize; i++)
-			{
-				ResetGesture(UserId, player1Gestures[i].gesture);
-			}
-		}
-		else if(UserId == Player2ID)
-		{
-			int listSize = player2Gestures.Count;
-			
-			for(int i = 0; i < listSize; i++)
-			{
-				ResetGesture(UserId, player2Gestures[i].gesture);
-			}
-		}
-	}
-	
-	// ì§€ì •ëœ ì‚¬ìš©ìì— ëŒ€í•œ ê°ì§€ ëœ ì œìŠ¤ì²˜ ëª©ë¡ì—ì„œ ì£¼ì–´ì§„ ì œìŠ¤ì²˜ë¥¼ ì‚­ì œí•©ë‹ˆë‹¤.
-	public bool DeleteGesture(uint UserId, KinectGestures.Gestures gesture)
-	{
-		int index = GetGestureIndex(UserId, gesture);
-		if(index < 0)
-			return false;
-		
-		if(UserId == Player1ID)
-			player1Gestures.RemoveAt(index);
-		else if(UserId == Player2ID)
-			player2Gestures.RemoveAt(index);
-		
-		return true;
-	}
-	
-	// ì§€ì •ëœ ì‚¬ìš©ìì˜ ê°ì§€ ëœ ì œìŠ¤ì²˜ ëª©ë¡ì„ ì§€ ì›ë‹ˆë‹¤
-	public void ClearGestures(uint UserId)
-	{
-		if(UserId == Player1ID)
-		{
-			player1Gestures.Clear();
-		}
-		else if(UserId == Player2ID)
-		{
-			player2Gestures.Clear();
-		}
-	}
-	
-	// ì§€ì •ëœ ì‚¬ìš©ìì— ëŒ€í•œ ê°ì§€ ëœ ì œìŠ¤ì²˜ ëª©ë¡ì—ì„œ ê°ì§€ ëœ ì œìŠ¤ì²˜ ìˆ˜ë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤.
-	public int GetGesturesCount(uint UserId)
-	{
-		if(UserId == Player1ID)
-			return player1Gestures.Count;
-		else if(UserId == Player2ID)
-			return player2Gestures.Count;
-		
-		return 0;
-	}
-	
-	// ì§€ì •ëœ ì‚¬ìš©ìì— ëŒ€í•œ ê°ì§€ ëœ ì œìŠ¤ì²˜ ëª©ë¡ì„ ë°˜í™˜í•©ë‹ˆë‹¤.
-	public List<KinectGestures.Gestures> GetGesturesList(uint UserId)
-	{
-		List<KinectGestures.Gestures> list = new List<KinectGestures.Gestures>();
+        if (UserId == Player1ID)
+        {
+            if (baseJoint >= 0 && baseJoint < player1JointsPos.Length && player1JointsTracked[baseJoint] &&
+                nextJoint >= 0 && nextJoint < player1JointsPos.Length && player1JointsTracked[nextJoint])
+            {
+                jointDir = player1JointsPos[nextJoint] - player1JointsPos[baseJoint];
+            }
+        }
+        else if (UserId == Player2ID)
+        {
+            if (baseJoint >= 0 && baseJoint < player2JointsPos.Length && player2JointsTracked[baseJoint] &&
+                nextJoint >= 0 && nextJoint < player2JointsPos.Length && player2JointsTracked[nextJoint])
+            {
+                jointDir = player2JointsPos[nextJoint] - player2JointsPos[baseJoint];
+            }
+        }
 
-		if(UserId == Player1ID)
-		{
-			foreach(KinectGestures.GestureData data in player1Gestures)
-				list.Add(data.gesture);
-		}
-		else if(UserId == Player2ID)
-		{
-			foreach(KinectGestures.GestureData data in player1Gestures)
-				list.Add(data.gesture);
-		}
-		
-		return list;
-	}
-	
-	// ì£¼ì–´ì§„ ì œìŠ¤ì²˜ê°€ ì§€ì •ëœ ì‚¬ìš©ìì— ëŒ€í•œ ê°ì§€ ëœ ì œìŠ¤ì²˜ ëª©ë¡ì—ìˆëŠ” ê²½ìš° trueë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤.
-	public bool IsGestureDetected(uint UserId, KinectGestures.Gestures gesture)
-	{
-		int index = GetGestureIndex(UserId, gesture);
-		return index >= 0;
-	}
-	
-	// ì§€ì •ëœ ì‚¬ìš©ìì— ëŒ€í•œ ì£¼ì–´ì§„ ì œìŠ¤ì²˜ê°€ ì™„ë£Œë˜ë©´ trueë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤.
-	public bool IsGestureComplete(uint UserId, KinectGestures.Gestures gesture, bool bResetOnComplete)
-	{
-		int index = GetGestureIndex(UserId, gesture);
+        // ¹æÇâ º¤ÅÍ¸¦ ÇÃ¸³
+        if (jointDir != Vector3.zero)
+        {
+            if (flipX)
+                jointDir.x = -jointDir.x;
 
-		if(index >= 0)
-		{
-			if(UserId == Player1ID)
-			{
-				KinectGestures.GestureData gestureData = player1Gestures[index];
-				
-				if(bResetOnComplete && gestureData.complete)
-				{
-					ResetPlayerGestures(UserId);
-					return true;
-				}
-				
-				return gestureData.complete;
-			}
-			else if(UserId == Player2ID)
-			{
-				KinectGestures.GestureData gestureData = player2Gestures[index];
+            if (flipZ)
+                jointDir.z = -jointDir.z;
+        }
 
-				if(bResetOnComplete && gestureData.complete)
-				{
-					ResetPlayerGestures(UserId);
-					return true;
-				}
-				
-				return gestureData.complete;
-			}
-		}
-		
-		return false;
-	}
-	
-	// ì§€ì •ëœ ì‚¬ìš©ìì— ëŒ€í•œ ì£¼ì–´ì§„ ì œìŠ¤ì²˜ê°€ ì·¨ì†Œë˜ë©´ trueë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤.
-	public bool IsGestureCancelled(uint UserId, KinectGestures.Gestures gesture)
-	{
-		int index = GetGestureIndex(UserId, gesture);
+        return jointDir;
+    }
 
-		if(index >= 0)
-		{
-			if(UserId == Player1ID)
-			{
-				KinectGestures.GestureData gestureData = player1Gestures[index];
-				return gestureData.cancelled;
-			}
-			else if(UserId == Player2ID)
-			{
-				KinectGestures.GestureData gestureData = player2Gestures[index];
-				return gestureData.cancelled;
-			}
-		}
-		
-		return false;
-	}
-	
-	// ì§€ì •ëœ ì‚¬ìš©ìì— ëŒ€í•œ ì£¼ì–´ì§„ ì œìŠ¤ì²˜ì˜ ë²”ìœ„ [0, 1] ë²”ìœ„ì—ì„œ ì§„í–‰ ìƒí™©ì„ ë°˜í™˜í•©ë‹ˆë‹¤.
-	public float GetGestureProgress(uint UserId, KinectGestures.Gestures gesture)
-	{
-		int index = GetGestureIndex(UserId, gesture);
+    // ÁÖ¾îÁø »ç¿ëÀÚ¿¡ ´ëÇÑ Á¦½ºÃ³¸¦ °¨Áö
+    /// <summary>
+    /// DetectGesture ¸Ş¼Òµå´Â Æ¯Á¤ Á¦½ºÃ³¸¦ °¨ÁöÇÏ°í ÀÌ¸¦ ±â¹İÀ¸·Î ´Ù¾çÇÑ µ¿ÀÛÀ» ½ÇÇàÇÕ´Ï´Ù.
+    /// »ç¿ëÀÚÀÇ Á¦½ºÃ³ ÁøÇà·üÀ» ÃßÀûÇÏ°í, ¿Ï·áµÈ Á¦½ºÃ³¿¡ ´ëÇÑ Ã³¸®¸¦ ¼öÇàÇÕ´Ï´Ù.
+    /// </summary>
+    /// <param name="UserId">Á¦½ºÃ³¸¦ °¨ÁöÇÒ »ç¿ëÀÚ ID</param>
+    /// <param name="gesture">°¨ÁöÇÒ Á¦½ºÃ³ Á¾·ù</param>
+    public void DetectGesture(uint UserId, KinectGestures.Gestures gesture)
+    {
+        int index = GetGestureIndex(UserId, gesture);
+        if (index >= 0)
+            DeleteGesture(UserId, gesture);
 
-		if(index >= 0)
-		{
-			if(UserId == Player1ID)
-			{
-				KinectGestures.GestureData gestureData = player1Gestures[index];
-				return gestureData.progress;
-			}
-			else if(UserId == Player2ID)
-			{
-				KinectGestures.GestureData gestureData = player2Gestures[index];
-				return gestureData.progress;
-			}
-		}
-		
-		return 0f;
-	}
-	
-	// ì§€ì •ëœ ì‚¬ìš©ìì— ëŒ€í•œ ì£¼ì–´ì§„ ì œìŠ¤ì²˜ì˜ í˜„ì¬ "í™”ë©´ ìœ„ì¹˜"ë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤.
-	public Vector3 GetGestureScreenPos(uint UserId, KinectGestures.Gestures gesture)
-	{
-		int index = GetGestureIndex(UserId, gesture);
+        // Á¦½ºÃ³ µ¥ÀÌÅÍ »ı¼º
+        KinectGestures.GestureData gestureData = new KinectGestures.GestureData
+        {
+            userId = UserId,
+            gesture = gesture,
+            state = 0,
+            joint = 0,
+            progress = 0f,
+            complete = false,
+            cancelled = false,
+            checkForGestures = new List<KinectGestures.Gestures>()
+        };
 
-		if(index >= 0)
-		{
-			if(UserId == Player1ID)
-			{
-				KinectGestures.GestureData gestureData = player1Gestures[index];
-				return gestureData.screenPos;
-			}
-			else if(UserId == Player2ID)
-			{
-				KinectGestures.GestureData gestureData = player2Gestures[index];
-				return gestureData.screenPos;
-			}
-		}
-		
-		return Vector3.zero;
-	}
-	
-	// ì œìŠ¤ì²˜ ì²­ì·¨ìì˜ ë‚´ë¶€ ëª©ë¡ì„ ì¬ì°½ì¡°í•˜ê³  ì¬ê°œí•©ë‹ˆë‹¤
-	public void ResetGestureListeners()
-	{
-		// ì œìŠ¤ì²˜ ì²­ì·¨ì ëª©ë¡ì„ ë§Œë“­ë‹ˆë‹¤
-		gestureListeners.Clear();
-		
-		foreach(MonoBehaviour script in GestureListeners)
-		{
-			if(script && (script is KinectGestures.GestureListenerInterface))
-			{
-				KinectGestures.GestureListenerInterface listener = (KinectGestures.GestureListenerInterface)script;
-				gestureListeners.Add(listener);
-			}
-		}
-		
-	}
-	
-	// í”Œë ˆì´ì–´ 1/2ë¥¼ìœ„í•œ ì•„ë°”íƒ€ ëª©ë¡ì´ ë³€ê²½ëœ í›„ ì•„ë°”íƒ€ ì»¨íŠ¸ë¡¤ëŸ¬ ëª©ë¡ì„ ì¬í˜„í•˜ê³  ì¬ê°œí•©ë‹ˆë‹¤.
-	public void ResetAvatarControllers()
-	{
-		if(Player1Avatars.Count == 0 && Player2Avatars.Count == 0)
-		{
-			AvatarController[] avatars = FindObjectsOfType(typeof(AvatarController)) as AvatarController[];
-			
-			foreach(AvatarController avatar in avatars)
-			{
-				Player1Avatars.Add(avatar.gameObject);
-			}
-		}
-		
-		if(Player1Controllers != null)
-		{
-			Player1Controllers.Clear();
-	
-			foreach(GameObject avatar in Player1Avatars)
-			{
-				if(avatar != null && avatar.activeInHierarchy)
-				{
-					AvatarController controller = avatar.GetComponent<AvatarController>();
-					controller.ResetToInitialPosition();
-					controller.Awake();
-					
-					Player1Controllers.Add(controller);
-				}
-			}
-		}
-		
-		if(Player2Controllers != null)
-		{
-			Player2Controllers.Clear();
-			
-			foreach(GameObject avatar in Player2Avatars)
-			{
-				if(avatar != null && avatar.activeInHierarchy)
-				{
-					AvatarController controller = avatar.GetComponent<AvatarController>();
-					controller.ResetToInitialPosition();
-					controller.Awake();
-					
-					Player2Controllers.Add(controller);
-				}
-			}
-		}
-	}
-	
-	// í˜„ì¬ ê°ì§€ ëœ Kinect ì‚¬ìš©ìë¥¼ ì œê±°í•˜ì—¬ ìƒˆ ê°ì§€/êµì • í”„ë¡œì„¸ìŠ¤ê°€ ì‹œì‘ë  ìˆ˜ ìˆìŠµë‹ˆë‹¤.
-	public void ClearKinectUsers()
-	{
-		if(!KinectInitialized)
-			return;
+        // Á¦½ºÃ³¿¡ µû¶ó È®ÀÎÇÒ Á¦½ºÃ³ Ãß°¡
+        switch (gesture)
+        {
+            case KinectGestures.Gestures.ZoomIn:
+                gestureData.checkForGestures.Add(KinectGestures.Gestures.ZoomOut);
+                gestureData.checkForGestures.Add(KinectGestures.Gestures.Wheel);
+                break;
 
-		// í˜„ì¬ ì‚¬ìš©ìë¥¼ ì œê±°í•˜ì‹­ì‹œì˜¤
-		for(int i = allUsers.Count - 1; i >= 0; i--)
-		{
-			uint userId = allUsers[i];
-			RemoveUser(userId);
-		}
-		
-		ResetFilters();
-	}
-	
-	// Kinect ë²„í¼ë¥¼ ì§€ìš°ê³  í•„í„°ë¥¼ ì¬ì„¤ì •í•©ë‹ˆë‹¤
-	public void ResetFilters()
-	{
-		if(!KinectInitialized)
-			return;
-		
-		// Kinect Varsë¥¼ í´ë¦¬ì–´í•©ë‹ˆë‹¤
-		player1Pos = Vector3.zero; player2Pos = Vector3.zero;
-		player1Ori = Matrix4x4.identity; player2Ori = Matrix4x4.identity;
-		
-		int skeletonJointsCount = (int)KinectWrapper.NuiSkeletonPositionIndex.Count;
-		for(int i = 0; i < skeletonJointsCount; i++)
-		{
-			player1JointsTracked[i] = false; player2JointsTracked[i] = false;
-			player1PrevTracked[i] = false; player2PrevTracked[i] = false;
-			player1JointsPos[i] = Vector3.zero; player2JointsPos[i] = Vector3.zero;
-			player1JointsOri[i] = Matrix4x4.identity; player2JointsOri[i] = Matrix4x4.identity;
-		}
-		
-		if(trackingStateFilter != null)
-		{
-			for(int i = 0; i < trackingStateFilter.Length; i++)
-				if(trackingStateFilter[i] != null)
-					trackingStateFilter[i].Reset();
-		}
-		
-		if(boneOrientationFilter != null)
-		{
-			for(int i = 0; i < boneOrientationFilter.Length; i++)
-				if(boneOrientationFilter[i] != null)
-					boneOrientationFilter[i].Reset();
-		}
-		
-		if(clippedLegsFilter != null)
-		{
-			for(int i = 0; i < clippedLegsFilter.Length; i++)
-				if(clippedLegsFilter[i] != null)
-					clippedLegsFilter[i].Reset();
-		}
-	}
-	
-	
-	// ------------------------------------- ê³µê³µ ê¸°ëŠ¥ì˜ ë -------------------------------------- //
+            case KinectGestures.Gestures.ZoomOut:
+                gestureData.checkForGestures.Add(KinectGestures.Gestures.ZoomIn);
+                gestureData.checkForGestures.Add(KinectGestures.Gestures.Wheel);
+                break;
 
-	void Awake()
-	{
-		int hr = 0;
-		
-		try
-		{
-			hr = KinectWrapper.NuiInitialize(KinectWrapper.NuiInitializeFlags.UsesSkeleton |
-				KinectWrapper.NuiInitializeFlags.UsesDepthAndPlayerIndex |
-				(ComputeColorMap ? KinectWrapper.NuiInitializeFlags.UsesColor : 0));
+            case KinectGestures.Gestures.Wheel:
+                gestureData.checkForGestures.Add(KinectGestures.Gestures.ZoomIn);
+                gestureData.checkForGestures.Add(KinectGestures.Gestures.ZoomOut);
+                break;
+        }
+
+        // »ç¿ëÀÚ ID¿¡ µû¶ó ÀûÀıÇÑ Á¦½ºÃ³ ¸®½ºÆ®¿¡ Ãß°¡
+        if (UserId == Player1ID)
+            player1Gestures.Add(gestureData);
+        else if (UserId == Player2ID)
+            player2Gestures.Add(gestureData);
+    }
+
+    // Æ¯Á¤ »ç¿ëÀÚÀÇ Á¦½ºÃ³ »óÅÂ¸¦ ¸®¼Â
+    public bool ResetGesture(uint UserId, KinectGestures.Gestures gesture)
+    {
+        int index = GetGestureIndex(UserId, gesture);
+        if (index < 0)
+            return false;
+
+        // ÇØ´ç Á¦½ºÃ³ µ¥ÀÌÅÍ¸¦ ÃÊ±âÈ­
+        KinectGestures.GestureData gestureData = (UserId == Player1ID) ? player1Gestures[index] : player2Gestures[index];
+
+        gestureData.state = 0;
+        gestureData.joint = 0;
+        gestureData.progress = 0f;
+        gestureData.complete = false;
+        gestureData.cancelled = false;
+        gestureData.startTrackingAtTime = Time.realtimeSinceStartup + KinectWrapper.Constants.MinTimeBetweenSameGestures;
+
+        if (UserId == Player1ID)
+            player1Gestures[index] = gestureData;
+        else if (UserId == Player2ID)
+            player2Gestures[index] = gestureData;
+
+        return true;
+    }
+
+    // ¸ğµç Á¦½ºÃ³ÀÇ »óÅÂ¸¦ ¸®¼Â
+    public void ResetPlayerGestures(uint UserId)
+    {
+        if (UserId == Player1ID)
+        {
+            int listSize = player1Gestures.Count;
+
+            for (int i = 0; i < listSize; i++)
+            {
+                ResetGesture(UserId, player1Gestures[i].gesture);
+            }
+        }
+        else if (UserId == Player2ID)
+        {
+            int listSize = player2Gestures.Count;
+
+            for (int i = 0; i < listSize; i++)
+            {
+                ResetGesture(UserId, player2Gestures[i].gesture);
+            }
+        }
+    }
+
+    // ÁÖ¾îÁø Á¦½ºÃ³¸¦ »èÁ¦
+    public bool DeleteGesture(uint UserId, KinectGestures.Gestures gesture)
+    {
+        int index = GetGestureIndex(UserId, gesture);
+        if (index < 0)
+            return false;
+
+        // ÇØ´ç »ç¿ëÀÚ ¸®½ºÆ®¿¡¼­ Á¦½ºÃ³ »èÁ¦
+        if (UserId == Player1ID)
+            player1Gestures.RemoveAt(index);
+        else if (UserId == Player2ID)
+            player2Gestures.RemoveAt(index);
+
+        return true;
+    }
+
+    // Æ¯Á¤ »ç¿ëÀÚÀÇ °¨ÁöµÈ Á¦½ºÃ³ ¸®½ºÆ®¸¦ ºñ¿ì±â
+    public void ClearGestures(uint UserId)
+    {
+        if (UserId == Player1ID)
+        {
+            player1Gestures.Clear();
+        }
+        else if (UserId == Player2ID)
+        {
+            player2Gestures.Clear();
+        }
+    }
+
+    // Æ¯Á¤ »ç¿ëÀÚÀÇ °¨ÁöµÈ Á¦½ºÃ³ ¼ö¸¦ ¹İÈ¯
+    public int GetGesturesCount(uint UserId)
+    {
+        if (UserId == Player1ID)
+            return player1Gestures.Count;
+        else if (UserId == Player2ID)
+            return player2Gestures.Count;
+
+        return 0;
+    }
+
+    // Æ¯Á¤ »ç¿ëÀÚÀÇ °¨ÁöµÈ Á¦½ºÃ³ ¸®½ºÆ®¸¦ ¹İÈ¯
+    public List<KinectGestures.Gestures> GetGesturesList(uint UserId)
+    {
+        List<KinectGestures.Gestures> list = new List<KinectGestures.Gestures>();
+
+        if (UserId == Player1ID)
+        {
+            foreach (KinectGestures.GestureData data in player1Gestures)
+                list.Add(data.gesture);
+        }
+        else if (UserId == Player2ID)
+        {
+            foreach (KinectGestures.GestureData data in player2Gestures)
+                list.Add(data.gesture);
+        }
+
+        return list;
+    }
+
+    // Æ¯Á¤ »ç¿ëÀÚÀÇ °¨ÁöµÈ Á¦½ºÃ³°¡ ÀÖ´ÂÁö ¿©ºÎ¸¦ ¹İÈ¯
+    public bool IsGestureDetected(uint UserId, KinectGestures.Gestures gesture)
+    {
+        int index = GetGestureIndex(UserId, gesture);
+        return index >= 0;
+    }
+
+    // Æ¯Á¤ »ç¿ëÀÚÀÇ Á¦½ºÃ³°¡ ¿Ï·áµÇ¾ú´ÂÁö ¿©ºÎ¸¦ ¹İÈ¯
+    public bool IsGestureComplete(uint UserId, KinectGestures.Gestures gesture, bool bResetOnComplete)
+    {
+        int index = GetGestureIndex(UserId, gesture);
+
+        if (index >= 0)
+        {
+            if (UserId == Player1ID)
+            {
+                KinectGestures.GestureData gestureData = player1Gestures[index];
+
+                if (bResetOnComplete && gestureData.complete)
+                {
+                    ResetPlayerGestures(UserId);
+                    return true;
+                }
+
+                return gestureData.complete;
+            }
+            else if (UserId == Player2ID)
+            {
+                KinectGestures.GestureData gestureData = player2Gestures[index];
+
+                if (bResetOnComplete && gestureData.complete)
+                {
+                    ResetPlayerGestures(UserId);
+                    return true;
+                }
+
+                return gestureData.complete;
+            }
+        }
+
+        return false;
+    }
+
+    // Æ¯Á¤ »ç¿ëÀÚÀÇ Á¦½ºÃ³°¡ Ãë¼ÒµÇ¾ú´ÂÁö ¿©ºÎ¸¦ ¹İÈ¯
+    public bool IsGestureCancelled(uint UserId, KinectGestures.Gestures gesture)
+    {
+        int index = GetGestureIndex(UserId, gesture);
+
+        if (index >= 0)
+        {
+            if (UserId == Player1ID)
+            {
+                KinectGestures.GestureData gestureData = player1Gestures[index];
+                return gestureData.cancelled;
+            }
+            else if (UserId == Player2ID)
+            {
+                KinectGestures.GestureData gestureData = player2Gestures[index];
+                return gestureData.cancelled;
+            }
+        }
+
+        return false;
+    }
+
+    // Æ¯Á¤ »ç¿ëÀÚÀÇ Á¦½ºÃ³ ÁøÇà·üÀ» ¹İÈ¯
+    public float GetGestureProgress(uint UserId, KinectGestures.Gestures gesture)
+    {
+        int index = GetGestureIndex(UserId, gesture);
+
+        if (index >= 0)
+        {
+            if (UserId == Player1ID)
+            {
+                KinectGestures.GestureData gestureData = player1Gestures[index];
+                return gestureData.progress;
+            }
+            else if (UserId == Player2ID)
+            {
+                KinectGestures.GestureData gestureData = player2Gestures[index];
+                return gestureData.progress;
+            }
+        }
+
+        return 0f;
+    }
+
+    // Æ¯Á¤ »ç¿ëÀÚÀÇ Á¦½ºÃ³¿¡ ´ëÇÑ ÇöÀç "È­¸é À§Ä¡"¸¦ ¹İÈ¯
+    public Vector3 GetGestureScreenPos(uint UserId, KinectGestures.Gestures gesture)
+    {
+        int index = GetGestureIndex(UserId, gesture);
+
+        if (index >= 0)
+        {
+            if (UserId == Player1ID)
+            {
+                KinectGestures.GestureData gestureData = player1Gestures[index];
+                return gestureData.screenPos;
+            }
+            else if (UserId == Player2ID)
+            {
+                KinectGestures.GestureData gestureData = player2Gestures[index];
+                return gestureData.screenPos;
+            }
+        }
+
+        return Vector3.zero;
+    }
+
+    // Á¦½ºÃ³ ¸®½º³Ê ¸®½ºÆ®¸¦ Àç¼³Á¤
+    public void ResetGestureListeners()
+    {
+        // Á¦½ºÃ³ ¸®½º³Ê ¸®½ºÆ® »ı¼º
+        gestureListeners.Clear();
+
+        foreach (MonoBehaviour script in GestureListeners)
+        {
+            if (script && (script is KinectGestures.GestureListenerInterface))
+            {
+                KinectGestures.GestureListenerInterface listener = (KinectGestures.GestureListenerInterface)script;
+                gestureListeners.Add(listener);
+            }
+        }
+    }
+
+    // ¾Æ¹ÙÅ¸ ÄÁÆ®·Ñ·¯ ¸®½ºÆ®¸¦ Àç¼³Á¤
+    public void ResetAvatarControllers()
+    {
+        if (Player1Avatars.Count == 0 && Player2Avatars.Count == 0)
+        {
+            AvatarController[] avatars = FindObjectsOfType(typeof(AvatarController)) as AvatarController[];
+
+            foreach (AvatarController avatar in avatars)
+            {
+                Player1Avatars.Add(avatar.gameObject);
+            }
+        }
+
+        // Player1 ¾Æ¹ÙÅ¸ ÄÁÆ®·Ñ·¯ ÃÊ±âÈ­
+        if (Player1Controllers != null)
+        {
+            Player1Controllers.Clear();
+            foreach (GameObject avatar in Player1Avatars)
+            {
+                if (avatar != null && avatar.activeInHierarchy)
+                {
+                    AvatarController controller = avatar.GetComponent<AvatarController>();
+                    controller.ResetToInitialPosition();
+                    controller.Awake();
+                    Player1Controllers.Add(controller);
+                }
+            }
+        }
+
+        // Player2 ¾Æ¹ÙÅ¸ ÄÁÆ®·Ñ·¯ ÃÊ±âÈ­
+        if (Player2Controllers != null)
+        {
+            Player2Controllers.Clear();
+            foreach (GameObject avatar in Player2Avatars)
+            {
+                if (avatar != null && avatar.activeInHierarchy)
+                {
+                    AvatarController controller = avatar.GetComponent<AvatarController>();
+                    controller.ResetToInitialPosition();
+                    controller.Awake();
+                    Player2Controllers.Add(controller);
+                }
+            }
+        }
+    }
+
+    // ÇöÀç °¨ÁöµÈ Kinect »ç¿ëÀÚ¸¦ Á¦°Å
+    public void ClearKinectUsers()
+    {
+        if (!KinectInitialized)
+            return;
+
+        // ÇöÀç »ç¿ëÀÚ Á¦°Å
+        for (int i = allUsers.Count - 1; i >= 0; i--)
+        {
+            uint userId = allUsers[i];
+            RemoveUser(userId);
+        }
+
+        ResetFilters();
+    }
+
+    // KinectÀÇ ¹öÆÛ¸¦ Áö¿ì°í ÇÊÅÍ¸¦ Àç¼³Á¤
+    public void ResetFilters()
+    {
+        if (!KinectInitialized)
+            return;
+
+        // Kinect º¯¼ö ÃÊ±âÈ­
+        player1Pos = Vector3.zero; player2Pos = Vector3.zero;
+        player1Ori = Matrix4x4.identity; player2Ori = Matrix4x4.identity;
+
+        int skeletonJointsCount = (int)KinectWrapper.NuiSkeletonPositionIndex.Count;
+        for (int i = 0; i < skeletonJointsCount; i++)
+        {
+            player1JointsTracked[i] = false; player2JointsTracked[i] = false;
+            player1PrevTracked[i] = false; player2PrevTracked[i] = false;
+            player1JointsPos[i] = Vector3.zero; player2JointsPos[i] = Vector3.zero;
+            player1JointsOri[i] = Matrix4x4.identity; player2JointsOri[i] = Matrix4x4.identity;
+        }
+
+        // °¢ ÇÊÅÍ ÃÊ±âÈ­
+        if (trackingStateFilter != null)
+        {
+            for (int i = 0; i < trackingStateFilter.Length; i++)
+                if (trackingStateFilter[i] != null)
+                    trackingStateFilter[i].Reset();
+        }
+
+        if (boneOrientationFilter != null)
+        {
+            for (int i = 0; i < boneOrientationFilter.Length; i++)
+                if (boneOrientationFilter[i] != null)
+                    boneOrientationFilter[i].Reset();
+        }
+
+        if (clippedLegsFilter != null)
+        {
+            for (int i = 0; i < clippedLegsFilter.Length; i++)
+                if (clippedLegsFilter[i] != null)
+                    clippedLegsFilter[i].Reset();
+        }
+    }
+
+    //----------------------------------- public ÇÔ¼öÀÇ ³¡ --------------------------------------//
+
+    void Awake()
+    {
+        int hr = 0;
+
+        try
+        {
+            // Kinect ÃÊ±âÈ­
+            hr = KinectWrapper.NuiInitialize(KinectWrapper.NuiInitializeFlags.UsesSkeleton |
+                KinectWrapper.NuiInitializeFlags.UsesDepthAndPlayerIndex |
+                (ComputeColorMap ? KinectWrapper.NuiInitializeFlags.UsesColor : 0));
             if (hr != 0)
-			{
-            	throw new Exception("NuiInitialize Failed");
-			}
-			
-			hr = KinectWrapper.NuiSkeletonTrackingEnable(IntPtr.Zero, 8);  // 0, 12,8
-			if (hr != 0)
-			{
-				throw new Exception("Cannot initialize Skeleton Data");
-			}
-			
-			depthStreamHandle = IntPtr.Zero;
-			if(ComputeUserMap)
-			{
-				hr = KinectWrapper.NuiImageStreamOpen(KinectWrapper.NuiImageType.DepthAndPlayerIndex, 
-					KinectWrapper.Constants.DepthImageResolution, 0, 2, IntPtr.Zero, ref depthStreamHandle);
-				if (hr != 0)
-				{
-					throw new Exception("Cannot open depth stream");
-				}
-			}
-			
-			colorStreamHandle = IntPtr.Zero;
-			if(ComputeColorMap)
-			{
-				hr = KinectWrapper.NuiImageStreamOpen(KinectWrapper.NuiImageType.Color, 
-					KinectWrapper.Constants.ColorImageResolution, 0, 2, IntPtr.Zero, ref colorStreamHandle);
-				if (hr != 0)
-				{
-					throw new Exception("Cannot open color stream");
-				}
-			}
+            {
+                throw new Exception("NuiInitialize Failed");
+            }
 
-			// Kinect ê³ ë„ ê°ë„ë¥¼ ì„¤ì •í•˜ì‹­ì‹œì˜¤
-			KinectWrapper.NuiCameraElevationSetAngle(SensorAngle);
-			
-			// ê³¨ê²© êµ¬ì¡° ì‹œì‘
-			skeletonFrame = new KinectWrapper.NuiSkeletonFrame() 
-							{ 
-								SkeletonData = new KinectWrapper.NuiSkeletonData[KinectWrapper.Constants.NuiSkeletonCount] 
-							};
-			
-			// ìŠ¤ë¬´ë”© ê¸°ëŠ¥ìœ¼ë¡œ ì „ë‹¬í•˜ëŠ” ë° ì‚¬ìš©ë˜ëŠ” ê°’
-			smoothParameters = new KinectWrapper.NuiTransformSmoothParameters();
-			
-			switch(smoothing)
-			{
-				case Smoothing.Default:
-					smoothParameters.fSmoothing = 0.5f;
-					smoothParameters.fCorrection = 0.5f;
-					smoothParameters.fPrediction = 0.5f;
-					smoothParameters.fJitterRadius = 0.05f;
-					smoothParameters.fMaxDeviationRadius = 0.04f;
-					break;
-				case Smoothing.Medium:
-					smoothParameters.fSmoothing = 0.5f;
-					smoothParameters.fCorrection = 0.1f;
-					smoothParameters.fPrediction = 0.5f;
-					smoothParameters.fJitterRadius = 0.1f;
-					smoothParameters.fMaxDeviationRadius = 0.1f;
-					break;
-				case Smoothing.Aggressive:
-					smoothParameters.fSmoothing = 0.7f;
-					smoothParameters.fCorrection = 0.3f;
-					smoothParameters.fPrediction = 1.0f;
-					smoothParameters.fJitterRadius = 1.0f;
-					smoothParameters.fMaxDeviationRadius = 1.0f;
-					break;
-			}
-			
-			// ì¶”ì  ìƒíƒœ í•„í„°ë¥¼ ì‹œì‘í•˜ì‹­ì‹œì˜¤
-			trackingStateFilter = new TrackingStateFilter[KinectWrapper.Constants.NuiSkeletonMaxTracked];
-			for(int i = 0; i < trackingStateFilter.Length; i++)
-			{
-				trackingStateFilter[i] = new TrackingStateFilter();
-				trackingStateFilter[i].Init();
-			}
-			
-			// ë¼ˆ ë°©í–¥ í•„í„°ë¥¼ ì‹œì‘í•˜ì‹­ì‹œì˜¤
-			boneOrientationFilter = new BoneOrientationsFilter[KinectWrapper.Constants.NuiSkeletonMaxTracked];
-			for(int i = 0; i < boneOrientationFilter.Length; i++)
-			{
-				boneOrientationFilter[i] = new BoneOrientationsFilter();
-				boneOrientationFilter[i].Init();
-			}
-			
-			// ì˜ë¦° ë‹¤ë¦¬ í•„í„°ë¥¼ ì‹œì‘í•˜ì‹­ì‹œì˜¤
-			clippedLegsFilter = new ClippedLegsFilter[KinectWrapper.Constants.NuiSkeletonMaxTracked];
-			for(int i = 0; i < clippedLegsFilter.Length; i++)
-			{
-				clippedLegsFilter[i] = new ClippedLegsFilter();
-			}
+            // ½ºÄÌ·¹Åæ Æ®·¡Å· È°¼ºÈ­
+            hr = KinectWrapper.NuiSkeletonTrackingEnable(IntPtr.Zero, 8);
+            if (hr != 0)
+            {
+                throw new Exception("Cannot initialize Skeleton Data");
+            }
 
-			// ë¼ˆ ë°©í–¥ ì œì•½ì„ ì‹œì‘í•˜ì‹­ì‹œì˜¤
-			boneConstraintsFilter = new BoneOrientationsConstraint();
-			boneConstraintsFilter.AddDefaultConstraints();
-			// ìì²´ êµì°¨ë¡œ ì œì•½ì„ ì‹œì‘í•˜ì‹­ì‹œì˜¤
-			selfIntersectionConstraint = new SelfIntersectionConstraint();
-			
-			// ì¡°ì¸íŠ¸ ìœ„ì¹˜ ë° ê³µë™ ë°©í–¥ì„ìœ„í•œ ë°°ì—´ì„ ë§Œë“­ë‹ˆë‹¤
-			int skeletonJointsCount = (int)KinectWrapper.NuiSkeletonPositionIndex.Count;
-			
-			player1JointsTracked = new bool[skeletonJointsCount];
-			player2JointsTracked = new bool[skeletonJointsCount];
-			player1PrevTracked = new bool[skeletonJointsCount];
-			player2PrevTracked = new bool[skeletonJointsCount];
-			
-			player1JointsPos = new Vector3[skeletonJointsCount];
-			player2JointsPos = new Vector3[skeletonJointsCount];
-			
-			player1JointsOri = new Matrix4x4[skeletonJointsCount];
-			player2JointsOri = new Matrix4x4[skeletonJointsCount];
-			
-			gestureTrackingAtTime = new float[KinectWrapper.Constants.NuiSkeletonMaxTracked];
-			
-			// Kinect ê³µê°„ì—ì„œ ì›”ë“œ ê³µê°„ìœ¼ë¡œ ë³€í™˜í•˜ëŠ” ë³€í™˜ ë§¤íŠ¸ë¦­ìŠ¤ ìƒì„±
-			Quaternion quatTiltAngle = new Quaternion();
-			quatTiltAngle.eulerAngles = new Vector3(-SensorAngle, 0.0f, 0.0f);
-			
-			// Float HeightaboveHips = SensorHeight -1.0f;
-			
-			// ë³€í™˜ ë§¤íŠ¸ë¦­ìŠ¤ - Kinectë¥¼ ì„¸ê³„ë¡œ
-			kinectToWorld.SetTRS(new Vector3(0.0f, SensorHeight, 0.0f), quatTiltAngle, Vector3.one);
-			flipMatrix = Matrix4x4.identity;
-			flipMatrix[2, 2] = -1;
-			
-			instance = this;
-			DontDestroyOnLoad(gameObject);
-		}
-		catch(DllNotFoundException e)
-		{
-			string message = "Please check the Kinect SDK installation.";
-			Debug.LogError(message);
-			Debug.LogError(e.ToString());
-			if(CalibrationText != null)
-				CalibrationText.GetComponent<GUIText>().text = message;
-				
-			return;
-		}
-		catch (Exception e)
-		{
-			string message = e.Message + " - " + KinectWrapper.GetNuiErrorString(hr);
-			Debug.LogError(message);
-			Debug.LogError(e.ToString());
-			if(CalibrationText != null)
-				CalibrationText.GetComponent<GUIText>().text = message;
-				
-			return;
-		}
-		
-		if(ComputeUserMap)
-		{
-	        // ê¹Šì´ ë° ë ˆì´ë¸” ë§µ ê´€ë ¨ ì œí’ˆì„ ì´ˆê¸°í™”í•©ë‹ˆë‹¤
-	        usersMapSize = KinectWrapper.GetDepthWidth() * KinectWrapper.GetDepthHeight();
-	        usersLblTex = new Texture2D(KinectWrapper.GetDepthWidth(), KinectWrapper.GetDepthHeight());
-	        usersMapColors = new Color32[usersMapSize];
-			usersPrevState = new ushort[usersMapSize];
+            // ±íÀÌ ½ºÆ®¸² ÇÚµé ÃÊ±âÈ­
+            depthStreamHandle = IntPtr.Zero;
+            if (ComputeUserMap)
+            {
+                hr = KinectWrapper.NuiImageStreamOpen(KinectWrapper.NuiImageType.DepthAndPlayerIndex,
+                    KinectWrapper.Constants.DepthImageResolution, 0, 2, IntPtr.Zero, ref depthStreamHandle);
+                if (hr != 0)
+                {
+                    throw new Exception("Cannot open depth stream");
+                }
+            }
 
-	        usersDepthMap = new ushort[usersMapSize];
-	        usersHistogramMap = new float[8192];
-		}
-		
-		if(ComputeColorMap)
-		{
-			// ì»¬ëŸ¬ ë§µ ê´€ë ¨ ë¬¼ê±´ì„ ì´ˆê¸°í™”í•˜ì‹­ì‹œì˜¤
-	        usersClrTex = new Texture2D(KinectWrapper.GetColorWidth(), KinectWrapper.GetColorHeight());
+            // »ö»ó ½ºÆ®¸² ÇÚµé ÃÊ±âÈ­
+            colorStreamHandle = IntPtr.Zero;
+            if (ComputeColorMap)
+            {
+                hr = KinectWrapper.NuiImageStreamOpen(KinectWrapper.NuiImageType.Color,
+                    KinectWrapper.Constants.ColorImageResolution, 0, 2, IntPtr.Zero, ref colorStreamHandle);
+                if (hr != 0)
+                {
+                    throw new Exception("Cannot open color stream");
+                }
+            }
 
-			colorImage = new Color32[KinectWrapper.GetColorWidth() * KinectWrapper.GetColorHeight()];
-			usersColorMap = new byte[colorImage.Length << 2];
-		}
-		
-		// ì¥ë©´ì—ì„œ ì‚¬ìš© ê°€ëŠ¥í•œ ì•„ë°”íƒ€ ì»¨íŠ¸ë¡¤ëŸ¬ë¥¼ ìë™ìœ¼ë¡œ ì°¾ìœ¼ì‹­ì‹œì˜¤.
-		if(Player1Avatars.Count == 0 && Player2Avatars.Count == 0)
-		{
-			AvatarController[] avatars = FindObjectsOfType(typeof(AvatarController)) as AvatarController[];
-			
-			foreach(AvatarController avatar in avatars)
-			{
-				Player1Avatars.Add(avatar.gameObject);
-			}
-		}
-		
-        // ëª¨ë“  ì‚¬ìš©ìë¥¼ í¬í•¨í•˜ë„ë¡ ì‚¬ìš©ì ëª©ë¡ì„ ì´ˆê¸°í™”í•˜ì‹­ì‹œì˜¤.
+            // KinectÀÇ ±â¿ï±â °¢µµ ¼³Á¤
+            KinectWrapper.NuiCameraElevationSetAngle(SensorAngle);
+
+            // ½ºÄÌ·¹Åæ ±¸Á¶Ã¼ ÃÊ±âÈ­
+            skeletonFrame = new KinectWrapper.NuiSkeletonFrame()
+            {
+                SkeletonData = new KinectWrapper.NuiSkeletonData[KinectWrapper.Constants.NuiSkeletonCount]
+            };
+
+            // ½º¹«µù ÇÔ¼ö¿¡ »ç¿ëÇÒ °ª ¼³Á¤
+            smoothParameters = new KinectWrapper.NuiTransformSmoothParameters();
+
+            switch (smoothing)
+            {
+                case Smoothing.Default:
+                    smoothParameters.fSmoothing = 0.5f;
+                    smoothParameters.fCorrection = 0.5f;
+                    smoothParameters.fPrediction = 0.5f;
+                    smoothParameters.fJitterRadius = 0.05f;
+                    smoothParameters.fMaxDeviationRadius = 0.04f;
+                    break;
+                case Smoothing.Medium:
+                    smoothParameters.fSmoothing = 0.5f;
+                    smoothParameters.fCorrection = 0.1f;
+                    smoothParameters.fPrediction = 0.5f;
+                    smoothParameters.fJitterRadius = 0.1f;
+                    smoothParameters.fMaxDeviationRadius = 0.1f;
+                    break;
+                case Smoothing.Aggressive:
+                    smoothParameters.fSmoothing = 0.7f;
+                    smoothParameters.fCorrection = 0.3f;
+                    smoothParameters.fPrediction = 1.0f;
+                    smoothParameters.fJitterRadius = 1.0f;
+                    smoothParameters.fMaxDeviationRadius = 1.0f;
+                    break;
+            }
+
+            // Æ®·¡Å· »óÅÂ ÇÊÅÍ ÃÊ±âÈ­
+            trackingStateFilter = new TrackingStateFilter[KinectWrapper.Constants.NuiSkeletonMaxTracked];
+            for (int i = 0; i < trackingStateFilter.Length; i++)
+            {
+                trackingStateFilter[i] = new TrackingStateFilter();
+                trackingStateFilter[i].Init();
+            }
+
+            // »À ¹æÇâ ÇÊÅÍ ÃÊ±âÈ­
+            boneOrientationFilter = new BoneOrientationsFilter[KinectWrapper.Constants.NuiSkeletonMaxTracked];
+            for (int i = 0; i < boneOrientationFilter.Length; i++)
+            {
+                boneOrientationFilter[i] = new BoneOrientationsFilter();
+                boneOrientationFilter[i].Init();
+            }
+
+            // Àß¸° ´Ù¸® ÇÊÅÍ ÃÊ±âÈ­
+            clippedLegsFilter = new ClippedLegsFilter[KinectWrapper.Constants.NuiSkeletonMaxTracked];
+            for (int i = 0; i < clippedLegsFilter.Length; i++)
+            {
+                clippedLegsFilter[i] = new ClippedLegsFilter();
+            }
+
+            // »À ¹æÇâ Á¦¾à ÃÊ±âÈ­
+            boneConstraintsFilter = new BoneOrientationsConstraint();
+            boneConstraintsFilter.AddDefaultConstraints();
+            selfIntersectionConstraint = new SelfIntersectionConstraint();
+
+            // °üÀı À§Ä¡ ¹× ¹æÇâ ¹è¿­ »ı¼º
+            int skeletonJointsCount = (int)KinectWrapper.NuiSkeletonPositionIndex.Count;
+
+            player1JointsTracked = new bool[skeletonJointsCount];
+            player2JointsTracked = new bool[skeletonJointsCount];
+            player1PrevTracked = new bool[skeletonJointsCount];
+            player2PrevTracked = new bool[skeletonJointsCount];
+
+            player1JointsPos = new Vector3[skeletonJointsCount];
+            player2JointsPos = new Vector3[skeletonJointsCount];
+
+            player1JointsOri = new Matrix4x4[skeletonJointsCount];
+            player2JointsOri = new Matrix4x4[skeletonJointsCount];
+
+            gestureTrackingAtTime = new float[KinectWrapper.Constants.NuiSkeletonMaxTracked];
+
+            // Kinect °ø°£¿¡¼­ ¿ùµå °ø°£ º¯È¯ ¸ÅÆ®¸¯½º »ı¼º
+            Quaternion quatTiltAngle = new Quaternion();
+            quatTiltAngle.eulerAngles = new Vector3(-SensorAngle, 0.0f, 0.0f);
+
+            // º¯È¯ ¸ÅÆ®¸¯½º »ı¼º (Kinect¿¡¼­ ¿ùµå·Î)
+            kinectToWorld.SetTRS(new Vector3(0.0f, SensorHeight, 0.0f), quatTiltAngle, Vector3.one);
+            flipMatrix = Matrix4x4.identity;
+            flipMatrix[2, 2] = -1;
+
+            instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        catch (DllNotFoundException e)
+        {
+            string message = "Kinect SDK ¼³Ä¡¸¦ È®ÀÎÇÏ½Ê½Ã¿À.";
+            Debug.LogError(message);
+            Debug.LogError(e.ToString());
+            if (CalibrationText != null)
+                CalibrationText.GetComponent<GUIText>().text = message;
+
+            return;
+        }
+        catch (Exception e)
+        {
+            string message = e.Message + " - " + KinectWrapper.GetNuiErrorString(hr);
+            Debug.LogError(message);
+            Debug.LogError(e.ToString());
+            if (CalibrationText != null)
+                CalibrationText.GetComponent<GUIText>().text = message;
+
+            return;
+        }
+
+        // »ç¿ëÀÚ ¸Ê °ü·Ã ÃÊ±âÈ­
+        if (ComputeUserMap)
+        {
+            usersMapSize = KinectWrapper.GetDepthWidth() * KinectWrapper.GetDepthHeight();
+            usersLblTex = new Texture2D(KinectWrapper.GetDepthWidth(), KinectWrapper.GetDepthHeight());
+            usersMapColors = new Color32[usersMapSize];
+            usersPrevState = new ushort[usersMapSize];
+            usersDepthMap = new ushort[usersMapSize];
+            usersHistogramMap = new float[8192];
+        }
+
+        // »ö»ó ¸Ê °ü·Ã ÃÊ±âÈ­
+        if (ComputeColorMap)
+        {
+            usersClrTex = new Texture2D(KinectWrapper.GetColorWidth(), KinectWrapper.GetColorHeight());
+            colorImage = new Color32[KinectWrapper.GetColorWidth() * KinectWrapper.GetColorHeight()];
+            usersColorMap = new byte[colorImage.Length << 2];
+        }
+
+        // ¾Æ¹ÙÅ¸ ÄÁÆ®·Ñ·¯ ÀÚµ¿ °Ë»ö
+        if (Player1Avatars.Count == 0 && Player2Avatars.Count == 0)
+        {
+            AvatarController[] avatars = FindObjectsOfType(typeof(AvatarController)) as AvatarController[];
+
+            foreach (AvatarController avatar in avatars)
+            {
+                Player1Avatars.Add(avatar.gameObject);
+            }
+        }
+
+        // ¸ğµç »ç¿ëÀÚ ¸®½ºÆ® ÃÊ±âÈ­
         allUsers = new List<uint>();
-        
-		// ê° í”Œë ˆì´ì–´ ì•„ë°”íƒ€ì—ì„œ ì•„ë°”íƒ€ ì½˜ íŠ¸ë¡¤ëŸ¬ë¥¼ ë‹¹ê¹ë‹ˆë‹¤.
-		Player1Controllers = new List<AvatarController>();
-		Player2Controllers = new List<AvatarController>();
-		
-		// ê° ì•„ë°”íƒ€ ì»¨íŠ¸ë¡¤ëŸ¬ë¥¼ ê° í”Œë ˆì´ì–´ì˜ ëª©ë¡ì— ì¶”ê°€í•˜ì‹­ì‹œì˜¤.
-		foreach(GameObject avatar in Player1Avatars)
-		{
-			if(avatar != null && avatar.activeInHierarchy)
-			{
-				Player1Controllers.Add(avatar.GetComponent<AvatarController>());
-			}
-		}
-		
-		foreach(GameObject avatar in Player2Avatars)
-		{
-			if(avatar != null && avatar.activeInHierarchy)
-			{
-				Player2Controllers.Add(avatar.GetComponent<AvatarController>());
-			}
-		}
-		
-		// ì œìŠ¤ì²˜ ì²­ì·¨ì ëª©ë¡ì„ ë§Œë“­ë‹ˆë‹¤
-		gestureListeners = new List<KinectGestures.GestureListenerInterface>();
-		
-		foreach(MonoBehaviour script in GestureListeners)
-		{
-			if(script && (script is KinectGestures.GestureListenerInterface))
-			{
-				KinectGestures.GestureListenerInterface listener = (KinectGestures.GestureListenerInterface)script;
-				gestureListeners.Add(listener);
-			}
-		}
-		
-		// GUI í…ìŠ¤íŠ¸.
-		if(CalibrationText != null)
-		{
-			CalibrationText.GetComponent<GUIText>().text = "WAITING FOR USERS";
-		}
-		
-		Debug.Log("Waiting for users.");
-			
-		KinectInitialized = true;
-	}
-	
-	void Update()
-	{
-		if(KinectInitialized)
-		{
-			// ë‹¤ìŒ í”„ë ˆì„ì„ í™•ì¸í•˜ê¸° ìœ„í•´ Kinecextrasì˜ ê¸°ë³¸ ë˜í¼ê°€ í•„ìš”í•©ë‹ˆë‹¤.
-			// Extras 'ë˜í¼ë¥¼ ì‚¬ìš©í•˜ëŠ” ê²½ìš° ì•„ë˜ ì¤„ì„ íƒ€í˜‘í•˜ì§€ë§Œ Extras'ê´€ë¦¬ìëŠ” ì—†ìŠµë‹ˆë‹¤.
-			
-	        // í”Œë ˆì´ì–´ê°€ ì•„ì§ êµì •ë˜ì§€ ì•Šì€ ê²½ìš° ì‚¬ìš©ì ë§µì„ ê·¸ë¦½ë‹ˆë‹¤.
-			if(ComputeUserMap)
-			{
-				if(depthStreamHandle != IntPtr.Zero &&
-					KinectWrapper.PollDepth(depthStreamHandle, KinectWrapper.Constants.IsNearMode, ref usersDepthMap))
-				{
-		        	UpdateUserMap();
-				}
-			}
-			
-			if(ComputeColorMap)
-			{
-				if(colorStreamHandle != IntPtr.Zero &&
-					KinectWrapper.PollColor(colorStreamHandle, ref usersColorMap, ref colorImage))
-				{
-					UpdateColorMap();
-				}
-			}
-			
-			if(KinectWrapper.PollSkeleton(ref smoothParameters, ref skeletonFrame))
-			{
-				ProcessSkeleton();
-			}
-			
-			// í”Œë ˆì´ì–´ 1ì˜ ëª¨ë¸ì´ êµì •ë˜ê³  ëª¨ë¸ì´ í™œì„±í™”ë˜ë©´ ì—…ë°ì´íŠ¸í•˜ì‹­ì‹œì˜¤.
-			if(Player1Calibrated)
-			{
-				foreach (AvatarController controller in Player1Controllers)
-				{
-					// if (Controller.Active)
-					{
-						controller.UpdateAvatar(Player1ID);
-					}
-				}
-					
-				// ì™„ì „í•œ ì œìŠ¤ì²˜ë¥¼ í™•ì¸í•˜ì‹­ì‹œì˜¤
-				foreach(KinectGestures.GestureData gestureData in player1Gestures)
-				{
-					if(gestureData.complete)
-					{
-						if(gestureData.gesture == KinectGestures.Gestures.Click)
-						{
-							if(ControlMouseCursor)
-							{
-								MouseControl.MouseClick();
-							}
-						}
-						
-						foreach(KinectGestures.GestureListenerInterface listener in gestureListeners)
-						{
-							if(listener.GestureCompleted(Player1ID, 0, gestureData.gesture, 
-							                             (KinectWrapper.NuiSkeletonPositionIndex)gestureData.joint, gestureData.screenPos))
-							{
-								ResetPlayerGestures(Player1ID);
-							}
-						}
-					}
-					else if(gestureData.cancelled)
-					{
-						foreach(KinectGestures.GestureListenerInterface listener in gestureListeners)
-						{
-							if(listener.GestureCancelled(Player1ID, 0, gestureData.gesture, 
-							                             (KinectWrapper.NuiSkeletonPositionIndex)gestureData.joint))
-							{
-								ResetGesture(Player1ID, gestureData.gesture);
-							}
-						}
-					}
-					else if(gestureData.progress >= 0.1f)
-					{
-						if((gestureData.gesture == KinectGestures.Gestures.RightHandCursor || 
-							gestureData.gesture == KinectGestures.Gestures.LeftHandCursor) && 
-							gestureData.progress >= 0.5f)
-						{
-							if(GetGestureProgress(gestureData.userId, KinectGestures.Gestures.Click) < 0.3f)
-							{
-								if(HandCursor1 != null)
-								{
-									Vector3 vCursorPos = gestureData.screenPos;
-									
-									if(HandCursor1.GetComponent<GUITexture>() == null)
-									{
-										float zDist = HandCursor1.transform.position.z - Camera.main.transform.position.z;
-										vCursorPos.z = zDist;
-										
-										vCursorPos = Camera.main.ViewportToWorldPoint(vCursorPos);
-									}
 
-									HandCursor1.transform.position = Vector3.Lerp(HandCursor1.transform.position, vCursorPos, 3 * Time.deltaTime);
-								}
-								
-								if(ControlMouseCursor)
-								{
-									Vector3 vCursorPos = HandCursor1.GetComponent<GUITexture>() != null ? HandCursor1.transform.position :
-										Camera.main.WorldToViewportPoint(HandCursor1.transform.position);
-									MouseControl.MouseMove(vCursorPos, CalibrationText);
-								}
-							}
-						}
-			
-						foreach(KinectGestures.GestureListenerInterface listener in gestureListeners)
-						{
-							listener.GestureInProgress(Player1ID, 0, gestureData.gesture, gestureData.progress, 
-							                           (KinectWrapper.NuiSkeletonPositionIndex)gestureData.joint, gestureData.screenPos);
-						}
-					}
-				}
-			}
-			
-			// í”Œë ˆì´ì–´ 2ì˜ ëª¨ë¸ì„ ë³´ì •í•˜ê³  ëª¨ë¸ì´ í™œì„±í™”ë˜ë©´ ì—…ë°ì´íŠ¸í•˜ì‹­ì‹œì˜¤.
-			if(Player2Calibrated)
-			{
-				foreach (AvatarController controller in Player2Controllers)
-				{
-					{
-						controller.UpdateAvatar(Player2ID);
-					}
-				}
+        // ¾Æ¹ÙÅ¸ ÄÁÆ®·Ñ·¯ ¸®½ºÆ® ÃÊ±âÈ­
+        Player1Controllers = new List<AvatarController>();
+        Player2Controllers = new List<AvatarController>();
 
-				// ì™„ì „í•œ ì œìŠ¤ì²˜ë¥¼ í™•ì¸í•˜ì‹­ì‹œì˜¤
-				foreach(KinectGestures.GestureData gestureData in player2Gestures)
-				{
-					if(gestureData.complete)
-					{
-						if(gestureData.gesture == KinectGestures.Gestures.Click)
-						{
-							if(ControlMouseCursor)
-							{
-								MouseControl.MouseClick();
-							}
-						}
-						
-						foreach(KinectGestures.GestureListenerInterface listener in gestureListeners)
-						{
-							if(listener.GestureCompleted(Player2ID, 1, gestureData.gesture, 
-							                             (KinectWrapper.NuiSkeletonPositionIndex)gestureData.joint, gestureData.screenPos))
-							{
-								ResetPlayerGestures(Player2ID);
-							}
-						}
-					}
-					else if(gestureData.cancelled)
-					{
-						foreach(KinectGestures.GestureListenerInterface listener in gestureListeners)
-						{
-							if(listener.GestureCancelled(Player2ID, 1, gestureData.gesture, 
-							                             (KinectWrapper.NuiSkeletonPositionIndex)gestureData.joint))
-							{
-								ResetGesture(Player2ID, gestureData.gesture);
-							}
-						}
-					}
-					else if(gestureData.progress >= 0.1f)
-					{
-						if((gestureData.gesture == KinectGestures.Gestures.RightHandCursor || 
-							gestureData.gesture == KinectGestures.Gestures.LeftHandCursor) && 
-							gestureData.progress >= 0.5f)
-						{
-							if(GetGestureProgress(gestureData.userId, KinectGestures.Gestures.Click) < 0.3f)
-							{
-								if(HandCursor2 != null)
-								{
-									Vector3 vCursorPos = gestureData.screenPos;
-									
-									if(HandCursor2.GetComponent<GUITexture>() == null)
-									{
-										float zDist = HandCursor2.transform.position.z - Camera.main.transform.position.z;
-										vCursorPos.z = zDist;
-										
-										vCursorPos = Camera.main.ViewportToWorldPoint(vCursorPos);
-									}
-									
-									HandCursor2.transform.position = Vector3.Lerp(HandCursor2.transform.position, vCursorPos, 3 * Time.deltaTime);
-								}
-								
-								if(ControlMouseCursor)
-								{
-									Vector3 vCursorPos = HandCursor2.GetComponent<GUITexture>() != null ? HandCursor2.transform.position :
-										Camera.main.WorldToViewportPoint(HandCursor2.transform.position);
-									MouseControl.MouseMove(vCursorPos, CalibrationText);
-								}
-							}
-						}
-						
-						foreach(KinectGestures.GestureListenerInterface listener in gestureListeners)
-						{
-							listener.GestureInProgress(Player2ID, 1, gestureData.gesture, gestureData.progress, 
-							                           (KinectWrapper.NuiSkeletonPositionIndex)gestureData.joint, gestureData.screenPos);
-						}
-					}
-				}
-			}
-		}
-		
-		// ESCë¡œ í”„ë¡œê·¸ë¨ì„ ì£½ì…ë‹ˆë‹¤.
-		if(Input.GetKeyDown(KeyCode.Escape))
-		{
-			Application.Quit();
-		}
-	}
-	
-	// ê¸ˆì—°ì‹œ Kinectë¥¼ ì£½ì´ì‹­ì‹œì˜¤.
-	void OnApplicationQuit()
-	{
-		if(KinectInitialized)
-		{
-			// ì¢…ë£Œ ì˜¤í”ˆ ë‹ˆ
-			KinectWrapper.NuiShutdown();
-			instance = null;
-		}
-	}
-	
-	// GUIì— íˆìŠ¤í† ê·¸ë¨ ë§µì„ ê·¸ë¦½ë‹ˆë‹¤.
+        // °¢ ÇÃ·¹ÀÌ¾îÀÇ ¾Æ¹ÙÅ¸ ÄÁÆ®·Ñ·¯ Ãß°¡
+        foreach (GameObject avatar in Player1Avatars)
+        {
+            if (avatar != null && avatar.activeInHierarchy)
+            {
+                Player1Controllers.Add(avatar.GetComponent<AvatarController>());
+            }
+        }
+
+        foreach (GameObject avatar in Player2Avatars)
+        {
+            if (avatar != null && avatar.activeInHierarchy)
+            {
+                Player2Controllers.Add(avatar.GetComponent<AvatarController>());
+            }
+        }
+
+        // Á¦½ºÃ³ ¸®½º³Ê ¸®½ºÆ® »ı¼º
+        gestureListeners = new List<KinectGestures.GestureListenerInterface>();
+
+        foreach (MonoBehaviour script in GestureListeners)
+        {
+            if (script && (script is KinectGestures.GestureListenerInterface))
+            {
+                KinectGestures.GestureListenerInterface listener = (KinectGestures.GestureListenerInterface)script;
+                gestureListeners.Add(listener);
+            }
+        }
+
+        // GUI ÅØ½ºÆ® ÃÊ±âÈ­
+        if (CalibrationText != null)
+        {
+            CalibrationText.GetComponent<GUIText>().text = "»ç¿ëÀÚ¸¦ ±â´Ù¸®´Â Áß...";
+        }
+
+        Debug.Log("»ç¿ëÀÚ¸¦ ±â´Ù¸®´Â Áß...");
+
+        KinectInitialized = true;
+    }
+
+    /// <summary>
+    /// Update ¸Ş¼Òµå´Â ¸Å ÇÁ·¹ÀÓ¸¶´Ù È£ÃâµÇ¸ç, »ç¿ëÀÚ·ÎºÎÅÍ ±íÀÌ ¹× »ö»ó µ¥ÀÌÅÍ¸¦ °¡Á®¿À°í ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+    /// ½ºÄÌ·¹Åæ µ¥ÀÌÅÍ¸¦ Ã³¸®ÇÏ¿© °¢ °üÀıÀÇ À§Ä¡¿Í È¸ÀüÀ» °è»êÇÏ°í ¾Æ¹ÙÅ¸¿¡ Àû¿ëÇÕ´Ï´Ù.
+    /// </summary>
+    void Update()
+    {
+        if (KinectInitialized)
+        {
+            // »ç¿ëÀÚ ¸Ê ¾÷µ¥ÀÌÆ®
+            if (ComputeUserMap)
+            {
+                if (depthStreamHandle != IntPtr.Zero &&
+                    KinectWrapper.PollDepth(depthStreamHandle, KinectWrapper.Constants.IsNearMode, ref usersDepthMap))
+                {
+                    UpdateUserMap();
+                }
+            }
+
+            // »ö»ó ¸Ê ¾÷µ¥ÀÌÆ®
+            if (ComputeColorMap)
+            {
+                if (colorStreamHandle != IntPtr.Zero &&
+                    KinectWrapper.PollColor(colorStreamHandle, ref usersColorMap, ref colorImage))
+                {
+                    UpdateColorMap();
+                }
+            }
+
+            // ½ºÄÌ·¹Åæ µ¥ÀÌÅÍ ¾÷µ¥ÀÌÆ®
+            if (KinectWrapper.PollSkeleton(ref smoothParameters, ref skeletonFrame))
+            {
+                ProcessSkeleton();
+            }
+
+            // ÇÃ·¹ÀÌ¾î 1 ¸ğµ¨ ¾÷µ¥ÀÌÆ®
+            if (Player1Calibrated)
+            {
+                foreach (AvatarController controller in Player1Controllers)
+                {
+                    controller.UpdateAvatar(Player1ID);
+                }
+
+                // Á¦½ºÃ³ ¿Ï·á È®ÀÎ
+                foreach (KinectGestures.GestureData gestureData in player1Gestures)
+                {
+                    if (gestureData.complete)
+                    {
+                        if (gestureData.gesture == KinectGestures.Gestures.Click)
+                        {
+                            if (ControlMouseCursor)
+                            {
+                                MouseControl.MouseClick();
+                            }
+                        }
+
+                        foreach (KinectGestures.GestureListenerInterface listener in gestureListeners)
+                        {
+                            if (listener.GestureCompleted(Player1ID, 0, gestureData.gesture,
+                                                         (KinectWrapper.NuiSkeletonPositionIndex)gestureData.joint, gestureData.screenPos))
+                            {
+                                ResetPlayerGestures(Player1ID);
+                            }
+                        }
+                    }
+                    else if (gestureData.cancelled)
+                    {
+                        foreach (KinectGestures.GestureListenerInterface listener in gestureListeners)
+                        {
+                            if (listener.GestureCancelled(Player1ID, 0, gestureData.gesture,
+                                                         (KinectWrapper.NuiSkeletonPositionIndex)gestureData.joint))
+                            {
+                                ResetGesture(Player1ID, gestureData.gesture);
+                            }
+                        }
+                    }
+                    else if (gestureData.progress >= 0.1f)
+                    {
+                        if ((gestureData.gesture == KinectGestures.Gestures.RightHandCursor ||
+                            gestureData.gesture == KinectGestures.Gestures.LeftHandCursor) &&
+                            gestureData.progress >= 0.5f)
+                        {
+                            if (GetGestureProgress(gestureData.userId, KinectGestures.Gestures.Click) < 0.3f)
+                            {
+                                if (HandCursor1 != null)
+                                {
+                                    Vector3 vCursorPos = gestureData.screenPos;
+
+                                    if (HandCursor1.GetComponent<GUITexture>() == null)
+                                    {
+                                        float zDist = HandCursor1.transform.position.z - Camera.main.transform.position.z;
+                                        vCursorPos.z = zDist;
+
+                                        vCursorPos = Camera.main.ViewportToWorldPoint(vCursorPos);
+                                    }
+
+                                    HandCursor1.transform.position = Vector3.Lerp(HandCursor1.transform.position, vCursorPos, 3 * Time.deltaTime);
+                                }
+
+                                if (ControlMouseCursor)
+                                {
+                                    Vector3 vCursorPos = HandCursor1.GetComponent<GUITexture>() != null ? HandCursor1.transform.position :
+                                        Camera.main.WorldToViewportPoint(HandCursor1.transform.position);
+                                    MouseControl.MouseMove(vCursorPos, CalibrationText);
+                                }
+                            }
+                        }
+
+                        foreach (KinectGestures.GestureListenerInterface listener in gestureListeners)
+                        {
+                            listener.GestureInProgress(Player1ID, 0, gestureData.gesture, gestureData.progress,
+                                                       (KinectWrapper.NuiSkeletonPositionIndex)gestureData.joint, gestureData.screenPos);
+                        }
+                    }
+                }
+            }
+
+            // ÇÃ·¹ÀÌ¾î 2 ¸ğµ¨ ¾÷µ¥ÀÌÆ®
+            if (Player2Calibrated)
+            {
+                foreach (AvatarController controller in Player2Controllers)
+                {
+                    controller.UpdateAvatar(Player2ID);
+                }
+
+                // Á¦½ºÃ³ ¿Ï·á È®ÀÎ
+                foreach (KinectGestures.GestureData gestureData in player2Gestures)
+                {
+                    if (gestureData.complete)
+                    {
+                        if (gestureData.gesture == KinectGestures.Gestures.Click)
+                        {
+                            if (ControlMouseCursor)
+                            {
+                                MouseControl.MouseClick();
+                            }
+                        }
+
+                        foreach (KinectGestures.GestureListenerInterface listener in gestureListeners)
+                        {
+                            if (listener.GestureCompleted(Player2ID, 1, gestureData.gesture,
+                                                         (KinectWrapper.NuiSkeletonPositionIndex)gestureData.joint, gestureData.screenPos))
+                            {
+                                ResetPlayerGestures(Player2ID);
+                            }
+                        }
+                    }
+                    else if (gestureData.cancelled)
+                    {
+                        foreach (KinectGestures.GestureListenerInterface listener in gestureListeners)
+                        {
+                            if (listener.GestureCancelled(Player2ID, 1, gestureData.gesture,
+                                                         (KinectWrapper.NuiSkeletonPositionIndex)gestureData.joint))
+                            {
+                                ResetGesture(Player2ID, gestureData.gesture);
+                            }
+                        }
+                    }
+                    else if (gestureData.progress >= 0.1f)
+                    {
+                        if ((gestureData.gesture == KinectGestures.Gestures.RightHandCursor ||
+                            gestureData.gesture == KinectGestures.Gestures.LeftHandCursor) &&
+                            gestureData.progress >= 0.5f)
+                        {
+                            if (GetGestureProgress(gestureData.userId, KinectGestures.Gestures.Click) < 0.3f)
+                            {
+                                if (HandCursor2 != null)
+                                {
+                                    Vector3 vCursorPos = gestureData.screenPos;
+
+                                    if (HandCursor2.GetComponent<GUITexture>() == null)
+                                    {
+                                        float zDist = HandCursor2.transform.position.z - Camera.main.transform.position.z;
+                                        vCursorPos.z = zDist;
+
+                                        vCursorPos = Camera.main.ViewportToWorldPoint(vCursorPos);
+                                    }
+
+                                    HandCursor2.transform.position = Vector3.Lerp(HandCursor2.transform.position, vCursorPos, 3 * Time.deltaTime);
+                                }
+
+                                if (ControlMouseCursor)
+                                {
+                                    Vector3 vCursorPos = HandCursor2.GetComponent<GUITexture>() != null ? HandCursor2.transform.position :
+                                        Camera.main.WorldToViewportPoint(HandCursor2.transform.position);
+                                    MouseControl.MouseMove(vCursorPos, CalibrationText);
+                                }
+                            }
+                        }
+
+                        foreach (KinectGestures.GestureListenerInterface listener in gestureListeners)
+                        {
+                            listener.GestureInProgress(Player2ID, 1, gestureData.gesture, gestureData.progress,
+                                                       (KinectWrapper.NuiSkeletonPositionIndex)gestureData.joint, gestureData.screenPos);
+                        }
+                    }
+                }
+            }
+        }
+
+        // ESC Å°¸¦ ´­·¯ ¾ÖÇÃ¸®ÄÉÀÌ¼Ç Á¾·á
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Application.Quit();
+        }
+    }
+
+    // ¾ÖÇÃ¸®ÄÉÀÌ¼Ç Á¾·á ½Ã Kinect Á¾·á
+    /// <summary>
+    /// OnApplicationQuit ¸Ş¼Òµå´Â ¾ÖÇÃ¸®ÄÉÀÌ¼Ç Á¾·á ½Ã Kinect¸¦ Á¾·áÇÕ´Ï´Ù.
+    /// </summary>
+    void OnApplicationQuit()
+    {
+        if (KinectInitialized)
+        {
+            // OpenNI Á¾·á
+            KinectWrapper.NuiShutdown();
+            instance = null;
+        }
+    }
+
+    // GUI¿¡ È÷½ºÅä±×·¥ ¸Ê ±×¸®±â
     void OnGUI()
     {
-		if(KinectInitialized)
-		{
-	        if(ComputeUserMap && (/**(allUsers.Count == 0) ||*/ DisplayUserMap))
-	        {
-				if(usersMapRect.width == 0 || usersMapRect.height == 0)
-				{
-					// ë©”ì¸ ì¹´ë©”ë¼ ì‚¬ê°í˜•ì„ ì–»ìœ¼ì‹­ì‹œì˜¤
-					Rect cameraRect = Camera.main.pixelRect;
-					
-					// í•„ìš”í•œ ê²½ìš° ë§µ ë„ˆë¹„ì™€ ë†’ì´ë¥¼ í¼ì„¼íŠ¸ë¡œ ê³„ì‚°í•˜ì‹­ì‹œì˜¤
-					if(DisplayMapsWidthPercent == 0f)
-					{
-						DisplayMapsWidthPercent = (KinectWrapper.GetDepthWidth() / 2) * 100 / cameraRect.width;
-					}
-					
-					float displayMapsWidthPercent = DisplayMapsWidthPercent / 100f;
-					float displayMapsHeightPercent = displayMapsWidthPercent * KinectWrapper.GetDepthHeight() / KinectWrapper.GetDepthWidth();
-					
-					float displayWidth = cameraRect.width * displayMapsWidthPercent;
-					float displayHeight = cameraRect.width * displayMapsHeightPercent;
-					
-					usersMapRect = new Rect(cameraRect.width - displayWidth, cameraRect.height, displayWidth, -displayHeight);
-				}
+        if (KinectInitialized)
+        {
+            // »ç¿ëÀÚ ¸Ê Ç¥½Ã
+            if (ComputeUserMap && (/**(allUsers.Count == 0) ||*/ DisplayUserMap))
+            {
+                if (usersMapRect.width == 0 || usersMapRect.height == 0)
+                {
+                    // ¸ŞÀÎ Ä«¸Ş¶óÀÇ »ç°¢Çü °¡Á®¿À±â
+                    Rect cameraRect = Camera.main.pixelRect;
 
-	            GUI.DrawTexture(usersMapRect, usersLblTex);
-	        }
+                    // ÇÊ¿ä ½Ã ³Êºñ¿Í ³ôÀÌ¸¦ ºñÀ²·Î °è»ê
+                    if (DisplayMapsWidthPercent == 0f)
+                    {
+                        DisplayMapsWidthPercent = (KinectWrapper.GetDepthWidth() / 2) * 100 / cameraRect.width;
+                    }
 
-			else if(ComputeColorMap && (DisplayColorMap))
-			{
-				if(usersClrRect.width == 0 || usersClrTex.height == 0)
-				{
-					// ë©”ì¸ ì¹´ë©”ë¼ ì‚¬ê°í˜•ì„ ì–»ìœ¼ì‹­ì‹œì˜¤
-					Rect cameraRect = Camera.main.pixelRect;
-					
-					// í•„ìš”í•œ ê²½ìš° ë§µ ë„ˆë¹„ì™€ ë†’ì´ë¥¼ í¼ì„¼íŠ¸ë¡œ ê³„ì‚°í•˜ì‹­ì‹œì˜¤
-					if(DisplayMapsWidthPercent == 0f)
-					{
-						DisplayMapsWidthPercent = (KinectWrapper.GetDepthWidth() / 2) * 100 / cameraRect.width;
-					}
-					
-					float displayMapsWidthPercent = DisplayMapsWidthPercent / 100f;
-					float displayMapsHeightPercent = displayMapsWidthPercent * KinectWrapper.GetColorHeight() / KinectWrapper.GetColorWidth();
-					
-					float displayWidth = cameraRect.width * displayMapsWidthPercent;
-					float displayHeight = cameraRect.width * displayMapsHeightPercent;
-					
-					usersClrRect = new Rect(cameraRect.width - displayWidth, cameraRect.height, displayWidth, -displayHeight);
-					
-				}
+                    float displayMapsWidthPercent = DisplayMapsWidthPercent / 100f;
+                    float displayMapsHeightPercent = displayMapsWidthPercent * KinectWrapper.GetDepthHeight() / KinectWrapper.GetDepthWidth();
 
-				GUI.DrawTexture(usersClrRect, usersClrTex);
-			}
-		}
+                    float displayWidth = cameraRect.width * displayMapsWidthPercent;
+                    float displayHeight = cameraRect.width * displayMapsHeightPercent;
+
+                    usersMapRect = new Rect(cameraRect.width - displayWidth, cameraRect.height, displayWidth, -displayHeight);
+                }
+
+                GUI.DrawTexture(usersMapRect, usersLblTex);
+            }
+            // »ö»ó ¸Ê Ç¥½Ã
+            else if (ComputeColorMap && (DisplayColorMap))
+            {
+                if (usersClrRect.width == 0 || usersClrTex.height == 0)
+                {
+                    // ¸ŞÀÎ Ä«¸Ş¶óÀÇ »ç°¢Çü °¡Á®¿À±â
+                    Rect cameraRect = Camera.main.pixelRect;
+
+                    // ÇÊ¿ä ½Ã ³Êºñ¿Í ³ôÀÌ¸¦ ºñÀ²·Î °è»ê
+                    if (DisplayMapsWidthPercent == 0f)
+                    {
+                        DisplayMapsWidthPercent = (KinectWrapper.GetDepthWidth() / 2) * 100 / cameraRect.width;
+                    }
+
+                    float displayMapsWidthPercent = DisplayMapsWidthPercent / 100f;
+                    float displayMapsHeightPercent = displayMapsWidthPercent * KinectWrapper.GetColorHeight() / KinectWrapper.GetColorWidth();
+
+                    float displayWidth = cameraRect.width * displayMapsWidthPercent;
+                    float displayHeight = cameraRect.width * displayMapsHeightPercent;
+
+                    usersClrRect = new Rect(cameraRect.width - displayWidth, cameraRect.height, displayWidth, -displayHeight);
+                }
+
+                GUI.DrawTexture(usersClrRect, usersClrTex);
+            }
+        }
     }
-	
-	// ì‚¬ìš©ì ë§µì„ ì—…ë°ì´íŠ¸í•˜ì‹­ì‹œì˜¤
+
+    // »ç¿ëÀÚ ¸Ê ¾÷µ¥ÀÌÆ®
+    /// <summary>
+    /// UpdateUserMap ¸Ş¼Òµå´Â »ç¿ëÀÚ ¸ÊÀ» ¾÷µ¥ÀÌÆ®ÇÏ¿© GUI¿¡ Ç¥½ÃÇÕ´Ï´Ù.
+    /// ±íÀÌ µ¥ÀÌÅÍ¸¦ ±â¹İÀ¸·Î »ç¿ëÀÚ ¸ÊÀ» »ı¼ºÇÏ°í °»½ÅÇÕ´Ï´Ù.
+    /// </summary>
     void UpdateUserMap()
     {
         int numOfPoints = 0;
-		Array.Clear(usersHistogramMap, 0, usersHistogramMap.Length);
+        Array.Clear(usersHistogramMap, 0, usersHistogramMap.Length);
 
-        // ê¹Šì´ì— ëŒ€í•œ ëˆ„ì  íˆìŠ¤í† ê·¸ë¨ì„ ê³„ì‚°í•˜ì‹­ì‹œì˜¤
+        // ±íÀÌ¿¡ ´ëÇÑ ´©Àû È÷½ºÅä±×·¥ °è»ê
         for (int i = 0; i < usersMapSize; i++)
         {
-            // ì‚¬ìš©ìê°€ í¬í•¨ ëœ ê¹Šì´ì— ëŒ€í•´ì„œë§Œ ê³„ì‚°í•©ë‹ˆë‹¤
+            // »ç¿ëÀÚ°¡ ÀÖ´Â ±íÀÌ¿¡ ´ëÇØ¼­¸¸ °è»ê
             if ((usersDepthMap[i] & 7) != 0)
             {
-				ushort userDepth = (ushort)(usersDepthMap[i] >> 3);
+                ushort userDepth = (ushort)(usersDepthMap[i] >> 3);
                 usersHistogramMap[userDepth]++;
                 numOfPoints++;
             }
         }
-		
+
         if (numOfPoints > 0)
         {
             for (int i = 1; i < usersHistogramMap.Length; i++)
-	        {   
-		        usersHistogramMap[i] += usersHistogramMap[i - 1];
-	        }
-			
+            {
+                usersHistogramMap[i] += usersHistogramMap[i - 1];
+            }
+
             for (int i = 0; i < usersHistogramMap.Length; i++)
-	        {
+            {
                 usersHistogramMap[i] = 1.0f - (usersHistogramMap[i] / numOfPoints);
-	        }
+            }
         }
-		
-		// ì¢Œí‘œ ë§µí¼ì— í•„ìš”í•œ ë”ë¯¸ êµ¬ì¡°
-        KinectWrapper.NuiImageViewArea pcViewArea = new KinectWrapper.NuiImageViewArea 
-		{
+
+        // ÁÂÇ¥ ¸ÅÆÛ¿¡ ÇÊ¿äÇÑ ´õ¹Ì ±¸Á¶Ã¼
+        KinectWrapper.NuiImageViewArea pcViewArea = new KinectWrapper.NuiImageViewArea
+        {
             eDigitalZoom = 0,
             lCenterX = 0,
             lCenterY = 0
         };
-		
-        // ë ˆì´ë¸” ë§µê³¼ ê¹Šì´ íˆìŠ¤í† ê·¸ë¨ì„ ê¸°ë°˜ìœ¼ë¡œ ì‹¤ì œ ì‚¬ìš©ì í…ìŠ¤ì²˜ ìƒì„±
-		Color32 clrClear = Color.clear;
+
+        // ·¹ÀÌºí ¸Ê°ú ±íÀÌ È÷½ºÅä±×·¥À» ±â¹İÀ¸·Î ½ÇÁ¦ »ç¿ëÀÚ ÅØ½ºÃ³ »ı¼º
+        Color32 clrClear = Color.clear;
         for (int i = 0; i < usersMapSize; i++)
         {
-	        // ë ˆì´ë¸” ë§µì„ ìƒ‰ìƒ ë°°ì—´ë¡œ ë³€í™˜í•˜ë©´ì„œ í…ìŠ¤ì²˜ë¥¼ ë’¤ì§‘ìŠµë‹ˆë‹¤.
+            // ÅØ½ºÃ³¸¦ µÚÁı¾î ·¹ÀÌºí ¸ÊÀ» »ö»ó ¹è¿­·Î º¯È¯
             int flipIndex = i; // usersMapSize - i - 1;
-			
-			ushort userMap = (ushort)(usersDepthMap[i] & 7);
-			ushort userDepth = (ushort)(usersDepthMap[i] >> 3);
-			
-			ushort nowUserPixel = userMap != 0 ? (ushort)((userMap << 13) | userDepth) : userDepth;
-			ushort wasUserPixel = usersPrevState[flipIndex];
-			
-			// ë³€ê²½ëœ í”½ì…€ ë§Œ ê·¸ë¦½ë‹ˆë‹¤
-			if(nowUserPixel != wasUserPixel)
-			{
-				usersPrevState[flipIndex] = nowUserPixel;
-				
-	            if (userMap == 0)
-	            {
-	                usersMapColors[flipIndex] = clrClear;
-	            }
-	            else
-	            {
-					if(colorImage != null)
-					{
-						int x = i % KinectWrapper.Constants.DepthImageWidth;
-						int y = i / KinectWrapper.Constants.DepthImageWidth;
-	
-						int cx, cy;
-						int hr = KinectWrapper.NuiImageGetColorPixelCoordinatesFromDepthPixelAtResolution(
-							KinectWrapper.Constants.ColorImageResolution,
-							KinectWrapper.Constants.DepthImageResolution,
-							ref pcViewArea,
-							x, y, usersDepthMap[i],
-							out cx, out cy);
-						
-						if(hr == 0)
-						{
-							int colorIndex = cx + cy * KinectWrapper.Constants.ColorImageWidth;
-							// ColorIndex = userSmapsize -ColorIndex -1;
-							if(colorIndex >= 0 && colorIndex < usersMapSize)
-							{
-								Color32 colorPixel = colorImage[colorIndex];
-								usersMapColors[flipIndex] = colorPixel;  // new Color(colorPixel.r / 256f, colorPixel.g / 256f, colorPixel.b / 256f, 0.9f);
-								usersMapColors[flipIndex].a = 230; // 0.9f
-							}
-						}
-					}
-					else
-					{
-		                // ê¹Šì´ íˆìŠ¤í† ê·¸ë¨ì„ ê¸°ë°˜ìœ¼ë¡œ ë¸”ë Œë”© ìƒ‰ìƒì„ ë§Œë“­ë‹ˆë‹¤
-						float histDepth = usersHistogramMap[userDepth];
-		                Color c = new Color(histDepth, histDepth, histDepth, 0.9f);
-		                
-						switch(userMap % 4)
-		                {
-		                    case 0:
-		                        usersMapColors[flipIndex] = Color.red * c;
-		                        break;
-		                    case 1:
-		                        usersMapColors[flipIndex] = Color.green * c;
-		                        break;
-		                    case 2:
-		                        usersMapColors[flipIndex] = Color.blue * c;
-		                        break;
-		                    case 3:
-		                        usersMapColors[flipIndex] = Color.magenta * c;
-		                        break;
-		                }
-					}
-	            }
-				
-			}
+
+            ushort userMap = (ushort)(usersDepthMap[i] & 7);
+            ushort userDepth = (ushort)(usersDepthMap[i] >> 3);
+
+            ushort nowUserPixel = userMap != 0 ? (ushort)((userMap << 13) | userDepth) : userDepth;
+            ushort wasUserPixel = usersPrevState[flipIndex];
+
+            // º¯°æµÈ ÇÈ¼¿¸¸ ±×¸®±â
+            if (nowUserPixel != wasUserPixel)
+            {
+                usersPrevState[flipIndex] = nowUserPixel;
+
+                if (userMap == 0)
+                {
+                    usersMapColors[flipIndex] = clrClear;
+                }
+                else
+                {
+                    if (colorImage != null)
+                    {
+                        int x = i % KinectWrapper.Constants.DepthImageWidth;
+                        int y = i / KinectWrapper.Constants.DepthImageWidth;
+
+                        int cx, cy;
+                        int hr = KinectWrapper.NuiImageGetColorPixelCoordinatesFromDepthPixelAtResolution(
+                            KinectWrapper.Constants.ColorImageResolution,
+                            KinectWrapper.Constants.DepthImageResolution,
+                            ref pcViewArea,
+                            x, y, usersDepthMap[i],
+                            out cx, out cy);
+
+                        if (hr == 0)
+                        {
+                            int colorIndex = cx + cy * KinectWrapper.Constants.ColorImageWidth;
+                            //colorIndex = usersMapSize - colorIndex - 1;
+                            if (colorIndex >= 0 && colorIndex < usersMapSize)
+                            {
+                                Color32 colorPixel = colorImage[colorIndex];
+                                usersMapColors[flipIndex] = colorPixel;
+                                usersMapColors[flipIndex].a = 230; // Åõ¸íµµ ¼³Á¤
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // ±íÀÌ È÷½ºÅä±×·¥¿¡ µû¶ó È¥ÇÕ »ö»ó »ı¼º
+                        float histDepth = usersHistogramMap[userDepth];
+                        Color c = new Color(histDepth, histDepth, histDepth, 0.9f);
+
+                        switch (userMap % 4)
+                        {
+                            case 0:
+                                usersMapColors[flipIndex] = Color.red * c;
+                                break;
+                            case 1:
+                                usersMapColors[flipIndex] = Color.green * c;
+                                break;
+                            case 2:
+                                usersMapColors[flipIndex] = Color.blue * c;
+                                break;
+                            case 3:
+                                usersMapColors[flipIndex] = Color.magenta * c;
+                                break;
+                        }
+                    }
+                }
+            }
         }
-		
-		// ê·¸ê²ƒì„ ê·¸ë¦¬ì„¸ìš”!
+
+        // ±×¸®±â!
         usersLblTex.SetPixels32(usersMapColors);
 
-		if(!DisplaySkeletonLines)
-		{
-			usersLblTex.Apply();
-		}
-	}
-	
-	// ì»¬ëŸ¬ ë§µì„ ì—…ë°ì´íŠ¸í•˜ì‹­ì‹œì˜¤
-	void UpdateColorMap()
-	{
+        if (!DisplaySkeletonLines)
+        {
+            usersLblTex.Apply();
+        }
+    }
+
+    // »ö»ó ¸Ê ¾÷µ¥ÀÌÆ®
+    void UpdateColorMap()
+    {
         usersClrTex.SetPixels32(colorImage);
         usersClrTex.Apply();
-	}
-	
-	// userIDë¥¼ í”Œë ˆì´ì–´ 1 ë˜ëŠ” 2ì— í• ë‹¹í•˜ì‹­ì‹œì˜¤.
+    }
+
+    // »ç¿ëÀÚ ID¸¦ ÇÃ·¹ÀÌ¾î 1 ¶Ç´Â 2¿¡ ÇÒ´ç
     void CalibrateUser(uint UserId, int UserIndex, ref KinectWrapper.NuiSkeletonData skeletonData)
     {
-		// í”Œë ˆì´ì–´ 1ì´ êµì •ë˜ì§€ ì•Šì€ ê²½ìš° í•´ë‹¹ userIDë¥¼ í• ë‹¹í•˜ì‹­ì‹œì˜¤.
-		if(!Player1Calibrated)
-		{
-			// ì‹¤ìˆ˜ë¡œ í”Œë ˆì´ì–´ 2ë¥¼ í”Œë ˆì´ì–´ 1ì— í• ë‹¹í•˜ì§€ ì•Šë„ë¡ í™•ì¸í•˜ì‹­ì‹œì˜¤.
-			if (!allUsers.Contains(UserId))
-			{
-				if(CheckForCalibrationPose(UserId, ref Player1CalibrationPose, ref player1CalibrationData, ref skeletonData))
-				{
-					Player1Calibrated = true;
-					Player1ID = UserId;
-					Player1Index = UserIndex;
-					
-					allUsers.Add(UserId);
-					
-					foreach(AvatarController controller in Player1Controllers)
-					{
-						controller.SuccessfulCalibration(UserId);
-					}
-	
-					// ì œìŠ¤ì²˜ë¥¼ ì¶”ê°€í•˜ì—¬ ê²€ì¶œí•˜ì‹­ì‹œì˜¤
-					foreach(KinectGestures.Gestures gesture in Player1Gestures)
-					{
-						DetectGesture(UserId, gesture);
-					}
-					
-					// ìƒˆë¡œìš´ ì‚¬ìš©ìì— ëŒ€í•´ ì œìŠ¤ì²˜ ë¦¬ìŠ¤ë„ˆì—ê²Œ ì•Œë¦¬ì‹­ì‹œì˜¤
-					foreach(KinectGestures.GestureListenerInterface listener in gestureListeners)
-					{
-						listener.UserDetected(UserId, 0);
-					}
-					
-					// ê³¨ê²© í•„í„°ë¥¼ ì¬ì„¤ì •í•˜ì‹­ì‹œì˜¤
-					ResetFilters();
-					
-					// ìš°ë¦¬ê°€ 2 ëª…ì˜ ì‚¬ìš©ìë¥¼ ì‚¬ìš©í•˜ì§€ ì•ŠëŠ” ê²½ìš° ëª¨ë‘ êµì •ë©ë‹ˆë‹¤.
-					// if (! twousers)
-					{
-						AllPlayersCalibrated = !TwoUsers ? allUsers.Count >= 1 : allUsers.Count >= 2; // true;
-					}
-				}
-			}
-		}
-		// ê·¸ë ‡ì§€ ì•Šìœ¼ë©´ í”Œë ˆì´ì–´ 2ì— í• ë‹¹í•˜ì‹­ì‹œì˜¤.
-		else if(TwoUsers && !Player2Calibrated)
-		{
-			if (!allUsers.Contains(UserId))
-			{
-				if(CheckForCalibrationPose(UserId, ref Player2CalibrationPose, ref player2CalibrationData, ref skeletonData))
-				{
-					Player2Calibrated = true;
-					Player2ID = UserId;
-					Player2Index = UserIndex;
-					
-					allUsers.Add(UserId);
-					
-					foreach(AvatarController controller in Player2Controllers)
-					{
-						controller.SuccessfulCalibration(UserId);
-					}
-					
-					// ì œìŠ¤ì²˜ë¥¼ ì¶”ê°€í•˜ì—¬ ê²€ì¶œí•˜ì‹­ì‹œì˜¤
-					foreach(KinectGestures.Gestures gesture in Player2Gestures)
-					{
-						DetectGesture(UserId, gesture);
-					}
-					
-					// ìƒˆë¡œìš´ ì‚¬ìš©ìì— ëŒ€í•´ ì œìŠ¤ì²˜ ë¦¬ìŠ¤ë„ˆì—ê²Œ ì•Œë¦¬ì‹­ì‹œì˜¤
-					foreach(KinectGestures.GestureListenerInterface listener in gestureListeners)
-					{
-						listener.UserDetected(UserId, 1);
-					}
-					
-					// ê³¨ê²© í•„í„°ë¥¼ ì¬ì„¤ì •í•˜ì‹­ì‹œì˜¤
-					ResetFilters();
-					
-					// ëª¨ë“  ì‚¬ìš©ìê°€ êµì •ë©ë‹ˆë‹¤!
-					AllPlayersCalibrated = !TwoUsers ? allUsers.Count >= 1 : allUsers.Count >= 2; // true;
-				}
-			}
-		}
-		
-		// ëª¨ë“  ì‚¬ìš©ìê°€ ë³´ì •ë˜ë©´ ì°¾ì•„ë³´ì‹­ì‹œì˜¤.
-		if(AllPlayersCalibrated)
-		{
-			Debug.Log("All players calibrated.");
-			
-			if(CalibrationText != null)
-			{
-				CalibrationText.GetComponent<GUIText>().text = "";
-			}
-		}
+        // ÇÃ·¹ÀÌ¾î 1ÀÌ º¸Á¤µÇÁö ¾Ê¾Ò´Ù¸é, ±× »ç¿ëÀÚ ID¸¦ ÇÒ´ç
+        if (!Player1Calibrated)
+        {
+            // ÇÃ·¹ÀÌ¾î 2¸¦ ½Ç¼ö·Î ÇÃ·¹ÀÌ¾î 1¿¡ ÇÒ´çÇÏÁö ¾Êµµ·Ï È®ÀÎ
+            if (!allUsers.Contains(UserId))
+            {
+                if (CheckForCalibrationPose(UserId, ref Player1CalibrationPose, ref player1CalibrationData, ref skeletonData))
+                {
+                    Player1Calibrated = true;
+                    Player1ID = UserId;
+                    Player1Index = UserIndex;
+
+                    allUsers.Add(UserId);
+
+                    foreach (AvatarController controller in Player1Controllers)
+                    {
+                        controller.SuccessfulCalibration(UserId);
+                    }
+
+                    // °¨ÁöÇÒ Á¦½ºÃ³ Ãß°¡
+                    foreach (KinectGestures.Gestures gesture in Player1Gestures)
+                    {
+                        DetectGesture(UserId, gesture);
+                    }
+
+                    // Á¦½ºÃ³ ¸®½º³Ê¿¡°Ô »õ·Î¿î »ç¿ëÀÚ ¾Ë¸²
+                    foreach (KinectGestures.GestureListenerInterface listener in gestureListeners)
+                    {
+                        listener.UserDetected(UserId, 0);
+                    }
+
+                    // ½ºÄÌ·¹Åæ ÇÊÅÍ ÃÊ±âÈ­
+                    ResetFilters();
+
+                    // ÇÃ·¹ÀÌ¾î ¼ö¿¡ µû¶ó ¸ğµç ÇÃ·¹ÀÌ¾î°¡ º¸Á¤µÇ¾ú´ÂÁö È®ÀÎ
+                    AllPlayersCalibrated = !TwoUsers ? allUsers.Count >= 1 : allUsers.Count >= 2;
+                }
+            }
+        }
+        // ±×·¸Áö ¾ÊÀ¸¸é ÇÃ·¹ÀÌ¾î 2¿¡ ÇÒ´ç
+        else if (TwoUsers && !Player2Calibrated)
+        {
+            if (!allUsers.Contains(UserId))
+            {
+                if (CheckForCalibrationPose(UserId, ref Player2CalibrationPose, ref player2CalibrationData, ref skeletonData))
+                {
+                    Player2Calibrated = true;
+                    Player2ID = UserId;
+                    Player2Index = UserIndex;
+
+                    allUsers.Add(UserId);
+
+                    foreach (AvatarController controller in Player2Controllers)
+                    {
+                        controller.SuccessfulCalibration(UserId);
+                    }
+
+                    // °¨ÁöÇÒ Á¦½ºÃ³ Ãß°¡
+                    foreach (KinectGestures.Gestures gesture in Player2Gestures)
+                    {
+                        DetectGesture(UserId, gesture);
+                    }
+
+                    // Á¦½ºÃ³ ¸®½º³Ê¿¡°Ô »õ·Î¿î »ç¿ëÀÚ ¾Ë¸²
+                    foreach (KinectGestures.GestureListenerInterface listener in gestureListeners)
+                    {
+                        listener.UserDetected(UserId, 1);
+                    }
+
+                    // ½ºÄÌ·¹Åæ ÇÊÅÍ ÃÊ±âÈ­
+                    ResetFilters();
+
+                    // ¸ğµç ÇÃ·¹ÀÌ¾î°¡ º¸Á¤µÇ¾ú´ÂÁö È®ÀÎ
+                    AllPlayersCalibrated = !TwoUsers ? allUsers.Count >= 1 : allUsers.Count >= 2;
+                }
+            }
+        }
+
+        // ¸ğµç ÇÃ·¹ÀÌ¾î°¡ º¸Á¤µÈ °æ¿ì, ´õ ÀÌ»ó Ã£Áö ¾Êµµ·Ï ÁßÁö
+        if (AllPlayersCalibrated)
+        {
+            Debug.Log("¸ğµç ÇÃ·¹ÀÌ¾î°¡ º¸Á¤µÇ¾ú½À´Ï´Ù.");
+
+            if (CalibrationText != null)
+            {
+                CalibrationText.GetComponent<GUIText>().text = "";
+            }
+        }
     }
-	
-	// ìƒì–´ë²„ë¦° userIDë¥¼ ì œê±°í•˜ì‹­ì‹œì˜¤
-	void RemoveUser(uint UserId)
-	{
-		// ì„ ìˆ˜ 1ì„ ìƒìœ¼ë©´ ...
-		if(UserId == Player1ID)
-		{
-			// IDë¥¼ ë¬´íš¨í™”í•˜ê³  í•´ë‹¹ IDì™€ ê´€ë ¨ëœ ëª¨ë“  ëª¨ë¸ì„ ì¬ì„¤ì •í•˜ì‹­ì‹œì˜¤.
-			Player1ID = 0;
-			Player1Index = 0;
-			Player1Calibrated = false;
-			
-			foreach(AvatarController controller in Player1Controllers)
-			{
-				controller.ResetToInitialPosition();
-			}
-			
-			foreach(KinectGestures.GestureListenerInterface listener in gestureListeners)
-			{
-				listener.UserLost(UserId, 0);
-			}
-			
-			player1CalibrationData.userId = 0;
-		}
-		
-		// ì„ ìˆ˜ 2ë¥¼ ìƒìœ¼ë©´ ...
-		if(UserId == Player2ID)
-		{
-			// IDë¥¼ ë¬´íš¨í™”í•˜ê³  í•´ë‹¹ IDì™€ ê´€ë ¨ëœ ëª¨ë“  ëª¨ë¸ì„ ì¬ì„¤ì •í•˜ì‹­ì‹œì˜¤.
-			Player2ID = 0;
-			Player2Index = 0;
-			Player2Calibrated = false;
-			
-			foreach(AvatarController controller in Player2Controllers)
-			{
-				controller.ResetToInitialPosition();
-			}
-			
-			foreach(KinectGestures.GestureListenerInterface listener in gestureListeners)
-			{
-				listener.UserLost(UserId, 1);
-			}
-			
-			player2CalibrationData.userId = 0;
-		}
-		
-		// ì´ ì‚¬ìš©ìë¥¼ìœ„í•œ ëª…í™•í•œ ì œìŠ¤ì²˜ ëª©ë¡
-		ClearGestures(UserId);
 
-        // ì´ ì‚¬ìš©ìë¥¼ìœ„í•œ ëª…í™•í•œ ì œìŠ¤ì²˜ ëª©ë¡
+    // ÀÒ¾î¹ö¸° »ç¿ëÀÚ ID Á¦°Å
+    void RemoveUser(uint UserId)
+    {
+        // ÇÃ·¹ÀÌ¾î 1À» ÀÒ¾î¹ö¸° °æ¿ì
+        if (UserId == Player1ID)
+        {
+            // ID¸¦ null·Î ¼³Á¤ÇÏ°í, ÇØ´ç ID¿Í °ü·ÃµÈ ¸ğµç ¸ğµ¨À» Àç¼³Á¤
+            Player1ID = 0;
+            Player1Index = 0;
+            Player1Calibrated = false;
+
+            foreach (AvatarController controller in Player1Controllers)
+            {
+                controller.ResetToInitialPosition();
+            }
+
+            foreach (KinectGestures.GestureListenerInterface listener in gestureListeners)
+            {
+                listener.UserLost(UserId, 0);
+            }
+
+            player1CalibrationData.userId = 0;
+        }
+
+        // ÇÃ·¹ÀÌ¾î 2¸¦ ÀÒ¾î¹ö¸° °æ¿ì
+        if (UserId == Player2ID)
+        {
+            // ID¸¦ null·Î ¼³Á¤ÇÏ°í, ÇØ´ç ID¿Í °ü·ÃµÈ ¸ğµç ¸ğµ¨À» Àç¼³Á¤
+            Player2ID = 0;
+            Player2Index = 0;
+            Player2Calibrated = false;
+
+            foreach (AvatarController controller in Player2Controllers)
+            {
+                controller.ResetToInitialPosition();
+            }
+
+            foreach (KinectGestures.GestureListenerInterface listener in gestureListeners)
+            {
+                listener.UserLost(UserId, 1);
+            }
+
+            player2CalibrationData.userId = 0;
+        }
+
+        // ÀÌ »ç¿ëÀÚÀÇ Á¦½ºÃ³ ¸®½ºÆ®¸¦ Áö¿ò
+        ClearGestures(UserId);
+
+        // ±Û·Î¹ú »ç¿ëÀÚ ¸®½ºÆ®¿¡¼­ Á¦°Å
         allUsers.Remove(UserId);
-		AllPlayersCalibrated = !TwoUsers ? allUsers.Count >= 1 : allUsers.Count >= 2; // false;
-		
-		// ì´ ì‚¬ìš©ìë¥¼ìœ„í•œ ëª…í™•í•œ ì œìŠ¤ì²˜ ëª©ë¡
-		Debug.Log("Waiting for users.");
+        AllPlayersCalibrated = !TwoUsers ? allUsers.Count >= 1 : allUsers.Count >= 2;
 
-		if(CalibrationText != null)
-		{
-			CalibrationText.GetComponent<GUIText>().text = "WAITING FOR USERS";
-		}
-	}
-	
-	// ì¼ë¶€ ë‚´ë¶€ ìƒìˆ˜
-	private const int stateTracked = (int)KinectWrapper.NuiSkeletonPositionTrackingState.Tracked;
-	private const int stateNotTracked = (int)KinectWrapper.NuiSkeletonPositionTrackingState.NotTracked;
-	
-	private int [] mustBeTrackedJoints = { 
-		(int)KinectWrapper.NuiSkeletonPositionIndex.AnkleLeft,
-		(int)KinectWrapper.NuiSkeletonPositionIndex.FootLeft,
-		(int)KinectWrapper.NuiSkeletonPositionIndex.AnkleRight,
-		(int)KinectWrapper.NuiSkeletonPositionIndex.FootRight,
-	};
-	
-	// ê³¨ê²© ë°ì´í„°ë¥¼ ì²˜ë¦¬í•˜ì‹­ì‹œì˜¤
-	void ProcessSkeleton()
-	{
-		List<uint> lostUsers = new List<uint>();
-		lostUsers.AddRange(allUsers);
-		
-		// ë§ˆì§€ë§‰ ì—…ë°ì´íŠ¸ ì´í›„ ì‹œê°„ì„ ê³„ì‚°í•˜ì‹­ì‹œì˜¤
-		float currentNuiTime = Time.realtimeSinceStartup;
-		float deltaNuiTime = currentNuiTime - lastNuiTime;
-		
-		for(int i = 0; i < KinectWrapper.Constants.NuiSkeletonCount; i++)
-		{
-			KinectWrapper.NuiSkeletonData skeletonData = skeletonFrame.SkeletonData[i];
-			uint userId = skeletonData.dwTrackingID;
-			
-			if(skeletonData.eTrackingState == KinectWrapper.NuiSkeletonTrackingState.SkeletonTracked)
-			{
-				// ê³¨ê²© ìœ„ì¹˜ë¥¼ ì–»ìœ¼ì‹­ì‹œì˜¤
-				Vector3 skeletonPos = kinectToWorld.MultiplyPoint3x4(skeletonData.Position);
-				
-				if(!AllPlayersCalibrated)
-				{
-					// ì´ê²ƒì´ ê°€ì¥ ê°€ê¹Œìš´ ì‚¬ìš©ìì¸ì§€ í™•ì¸í•˜ì‹­ì‹œì˜¤
-					bool bClosestUser = true;
-					
-					if(DetectClosestUser)
-					{
-						for(int j = 0; j < KinectWrapper.Constants.NuiSkeletonCount; j++)
-						{
-							if(j != i)
-							{
-								KinectWrapper.NuiSkeletonData skeletonDataOther = skeletonFrame.SkeletonData[j];
-								
-								if((skeletonDataOther.eTrackingState == KinectWrapper.NuiSkeletonTrackingState.SkeletonTracked) &&
-									(Mathf.Abs(kinectToWorld.MultiplyPoint3x4(skeletonDataOther.Position).z) < Mathf.Abs(skeletonPos.z)))
-								{
-									bClosestUser = false;
-									break;
-								}
-							}
-						}
-					}
-					
-					if(bClosestUser)
-					{
-						CalibrateUser(userId, i + 1, ref skeletonData);
-					}
-				}
+        // »ç¿ëÀÚ ±³Ã¼ ½Ãµµ
+        Debug.Log("»ç¿ëÀÚ¸¦ ±â´Ù¸®´Â Áß...");
 
-				// ê´€ì ˆ ë°©í–¥ì„ ì–»ìŠµë‹ˆë‹¤
-				
-				if(userId == Player1ID && Mathf.Abs(skeletonPos.z) >= MinUserDistance &&
-				   (MaxUserDistance <= 0f || Mathf.Abs(skeletonPos.z) <= MaxUserDistance))
-				{
-					player1Index = i;
+        if (CalibrationText != null)
+        {
+            CalibrationText.GetComponent<GUIText>().text = "»ç¿ëÀÚ¸¦ ±â´Ù¸®´Â Áß...";
+        }
+    }
 
-					// í”Œë ˆì´ì–´ ìœ„ì¹˜ë¥¼ ì–»ìœ¼ì‹­ì‹œì˜¤
-					player1Pos = skeletonPos;
-					
-					// ë¨¼ì € ì¶”ì  ìƒíƒœ í•„í„°ë¥¼ ì ìš©í•˜ì‹­ì‹œì˜¤
-					trackingStateFilter[0].UpdateFilter(ref skeletonData);
-					
-					// ì•„ë°”íƒ€ ì™¸ê´€ì„ ê°œì„ í•˜ê¸°ìœ„í•œ ê³ ì • ê³¨ê²©.
-					if(UseClippedLegsFilter && clippedLegsFilter[0] != null)
-					{
-						clippedLegsFilter[0].FilterSkeleton(ref skeletonData, deltaNuiTime);
-					}
-	
-					if(UseSelfIntersectionConstraint && selfIntersectionConstraint != null)
-					{
-						selfIntersectionConstraint.Constrain(ref skeletonData);
-					}
-	
-					// ê´€ì ˆì˜ ìœ„ì¹˜ì™€ íšŒì „ì„ ì–»ìŠµë‹ˆë‹¤
-					for (int j = 0; j < (int)KinectWrapper.NuiSkeletonPositionIndex.Count; j++)
-					{
-						bool playerTracked = IgnoreInferredJoints ? (int)skeletonData.eSkeletonPositionTrackingState[j] == stateTracked :
-							(Array.BinarySearch(mustBeTrackedJoints, j) >= 0 ? (int)skeletonData.eSkeletonPositionTrackingState[j] == stateTracked :
-							(int)skeletonData.eSkeletonPositionTrackingState[j] != stateNotTracked);
-						player1JointsTracked[j] = player1PrevTracked[j] && playerTracked;
-						player1PrevTracked[j] = playerTracked;
-						
-						if(player1JointsTracked[j])
-						{
-							player1JointsPos[j] = kinectToWorld.MultiplyPoint3x4(skeletonData.SkeletonPositions[j]);
-						}
-						
-					}
-					
-					// ì§ˆê° ìœ„ì— ê³¨ê²©ì„ ê·¸ë¦½ë‹ˆë‹¤
-					if(DisplaySkeletonLines && ComputeUserMap)
-					{
-						DrawSkeleton(usersLblTex, ref skeletonData, ref player1JointsTracked);
-						usersLblTex.Apply();
-					}
-					
-					// ê´€ì ˆ ë°©í–¥ì„ ê³„ì‚°í•©ë‹ˆë‹¤
-					KinectWrapper.GetSkeletonJointOrientation(ref player1JointsPos, ref player1JointsTracked, ref player1JointsOri);
-					
-					// í•„í„° ë°©í–¥ ì œì•½ ì¡°ê±´
-					if(UseBoneOrientationsConstraint && boneConstraintsFilter != null)
-					{
-						boneConstraintsFilter.Constrain(ref player1JointsOri, ref player1JointsTracked);
-					}
-					
-                    // ê³µë™ ë°©í–¥ì„ í•„í„°ë§í•˜ì‹­ì‹œì˜¤.
-                    // ëª¨ë“  ê³µë™ ìœ„ì¹˜ ìˆ˜ì • í›„ì— ìˆ˜í–‰í•´ì•¼í•©ë‹ˆë‹¤.
-	                if(UseBoneOrientationsFilter && boneOrientationFilter[0] != null)
-	                {
-	                    boneOrientationFilter[0].UpdateFilter(ref skeletonData, ref player1JointsOri);
-	                }
-	
-					// í”Œë ˆì´ì–´ ë¡œí…Œì´ì…˜ì„ ë°›ìœ¼ì‹­ì‹œì˜¤
-					player1Ori = player1JointsOri[(int)KinectWrapper.NuiSkeletonPositionIndex.HipCenter];
-					
-					// ì œìŠ¤ì²˜ë¥¼ í™•ì¸í•˜ì‹­ì‹œì˜¤
-					if(Time.realtimeSinceStartup >= gestureTrackingAtTime[0])
-					{
-						int listGestureSize = player1Gestures.Count;
-						float timestampNow = Time.realtimeSinceStartup;
-						string sDebugGestures = string.Empty;  // "Tracked Gestures:\n";
+    // ³»ºÎ »ó¼ö
+    private const int stateTracked = (int)KinectWrapper.NuiSkeletonPositionTrackingState.Tracked;
+    private const int stateNotTracked = (int)KinectWrapper.NuiSkeletonPositionTrackingState.NotTracked;
 
-						for(int g = 0; g < listGestureSize; g++)
-						{
-							KinectGestures.GestureData gestureData = player1Gestures[g];
-							
-							if((timestampNow >= gestureData.startTrackingAtTime) && 
-								!IsConflictingGestureInProgress(gestureData))
-							{
-								KinectGestures.CheckForGesture(userId, ref gestureData, Time.realtimeSinceStartup, 
-									ref player1JointsPos, ref player1JointsTracked);
-								player1Gestures[g] = gestureData;
+    private int[] mustBeTrackedJoints = {
+        (int)KinectWrapper.NuiSkeletonPositionIndex.AnkleLeft,
+        (int)KinectWrapper.NuiSkeletonPositionIndex.FootLeft,
+        (int)KinectWrapper.NuiSkeletonPositionIndex.AnkleRight,
+        (int)KinectWrapper.NuiSkeletonPositionIndex.FootRight,
+    };
 
-								if(gestureData.complete)
-								{
-									gestureTrackingAtTime[0] = timestampNow + MinTimeBetweenGestures;
-								}
+    // ½ºÄÌ·¹Åæ µ¥ÀÌÅÍ Ã³¸®
+    /// <summary>
+    /// ProcessSkeleton ¸Ş¼Òµå´Â ½ºÄÌ·¹Åæ µ¥ÀÌÅÍ¸¦ Ã³¸®ÇÏ¿© »ç¿ëÀÚ Á¤º¸¸¦ ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+    /// °¢ »ç¿ëÀÚ¿¡ ´ëÇÑ ½ºÄÌ·¹Åæ À§Ä¡¿Í »óÅÂ¸¦ °ü¸®ÇÕ´Ï´Ù.
+    /// </summary>
+    void ProcessSkeleton()
+    {
+        List<uint> lostUsers = new List<uint>();
+        lostUsers.AddRange(allUsers);
 
-								{
-									sDebugGestures += string.Format("{0} - state: {1}, time: {2:F1}, progress: {3}%\n", 
-									                            	gestureData.gesture, gestureData.state, 
-									                                gestureData.timestamp,
-									                            	(int)(gestureData.progress * 100 + 0.5f));
-								}
-							}
-						}
+        // ¸¶Áö¸· ¾÷µ¥ÀÌÆ® ÀÌÈÄ °æ°ú ½Ã°£ °è»ê
+        float currentNuiTime = Time.realtimeSinceStartup;
+        float deltaNuiTime = currentNuiTime - lastNuiTime;
 
-						if(GesturesDebugText)
-						{
-							sDebugGestures += string.Format("\n HandLeft: {0}", player1JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.HandLeft] ?
-							                                player1JointsPos[(int)KinectWrapper.NuiSkeletonPositionIndex.HandLeft].ToString() : "");
-							sDebugGestures += string.Format("\n HandRight: {0}", player1JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.HandRight] ?
-							                                player1JointsPos[(int)KinectWrapper.NuiSkeletonPositionIndex.HandRight].ToString() : "");
-							sDebugGestures += string.Format("\n ElbowLeft: {0}", player1JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.ElbowLeft] ?
-							                                player1JointsPos[(int)KinectWrapper.NuiSkeletonPositionIndex.ElbowLeft].ToString() : "");
-							sDebugGestures += string.Format("\n ElbowRight: {0}", player1JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.ElbowRight] ?
-							                                player1JointsPos[(int)KinectWrapper.NuiSkeletonPositionIndex.ElbowRight].ToString() : "");
+        for (int i = 0; i < KinectWrapper.Constants.NuiSkeletonCount; i++)
+        {
+            KinectWrapper.NuiSkeletonData skeletonData = skeletonFrame.SkeletonData[i];
+            uint userId = skeletonData.dwTrackingID;
 
-							sDebugGestures += string.Format("\n ShoulderLeft: {0}", player1JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.ShoulderLeft] ?
-							                                player1JointsPos[(int)KinectWrapper.NuiSkeletonPositionIndex.ShoulderLeft].ToString() : "");
-							sDebugGestures += string.Format("\n ShoulderRight: {0}", player1JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.ShoulderRight] ?
-							                                player1JointsPos[(int)KinectWrapper.NuiSkeletonPositionIndex.ShoulderRight].ToString() : "");
-							
-							sDebugGestures += string.Format("\n Neck: {0}", player1JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.ShoulderCenter] ?
-							                                player1JointsPos[(int)KinectWrapper.NuiSkeletonPositionIndex.ShoulderCenter].ToString() : "");
-							sDebugGestures += string.Format("\n Hips: {0}", player1JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.HipCenter] ?
-							                                player1JointsPos[(int)KinectWrapper.NuiSkeletonPositionIndex.HipCenter].ToString() : "");
-							sDebugGestures += string.Format("\n HipLeft: {0}", player1JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.HipLeft] ?
-							                                player1JointsPos[(int)KinectWrapper.NuiSkeletonPositionIndex.HipLeft].ToString() : "");
-							sDebugGestures += string.Format("\n HipRight: {0}", player1JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.HipRight] ?
-							                                player1JointsPos[(int)KinectWrapper.NuiSkeletonPositionIndex.HipRight].ToString() : "");
+            if (skeletonData.eTrackingState == KinectWrapper.NuiSkeletonTrackingState.SkeletonTracked)
+            {
+                // ½ºÄÌ·¹Åæ À§Ä¡ °¡Á®¿À±â
+                Vector3 skeletonPos = kinectToWorld.MultiplyPoint3x4(skeletonData.Position);
 
-							GesturesDebugText.GetComponent<GUIText>().text = sDebugGestures;
-						}
-					}
-				}
-				else if(userId == Player2ID && Mathf.Abs(skeletonPos.z) >= MinUserDistance &&
-				        (MaxUserDistance <= 0f || Mathf.Abs(skeletonPos.z) <= MaxUserDistance))
-				{
-					player2Index = i;
+                if (!AllPlayersCalibrated)
+                {
+                    // °¡Àå °¡±î¿î »ç¿ëÀÚ È®ÀÎ
+                    bool bClosestUser = true;
 
-					// í”Œë ˆì´ì–´ ìœ„ì¹˜ë¥¼ ì–»ìœ¼ì‹­ì‹œì˜¤
-					player2Pos = skeletonPos;
-					
-					// ë¨¼ì € ì¶”ì  ìƒíƒœ í•„í„°ë¥¼ ì ìš©í•˜ì‹­ì‹œì˜¤
-					trackingStateFilter[1].UpdateFilter(ref skeletonData);
-					
-					// ì•„ë°”íƒ€ ì™¸ê´€ì„ ê°œì„ í•˜ê¸°ìœ„í•œ ê³ ì • ê³¨ê²©.
-					if(UseClippedLegsFilter && clippedLegsFilter[1] != null)
-					{
-						clippedLegsFilter[1].FilterSkeleton(ref skeletonData, deltaNuiTime);
-					}
-	
-					if(UseSelfIntersectionConstraint && selfIntersectionConstraint != null)
-					{
-						selfIntersectionConstraint.Constrain(ref skeletonData);
-					}
+                    if (DetectClosestUser)
+                    {
+                        for (int j = 0; j < KinectWrapper.Constants.NuiSkeletonCount; j++)
+                        {
+                            if (j != i)
+                            {
+                                KinectWrapper.NuiSkeletonData skeletonDataOther = skeletonFrame.SkeletonData[j];
 
-					// ê´€ì ˆì˜ ìœ„ì¹˜ì™€ íšŒì „ì„ ì–»ìŠµë‹ˆë‹¤
-					for (int j = 0; j < (int)KinectWrapper.NuiSkeletonPositionIndex.Count; j++)
-					{
-						bool playerTracked = IgnoreInferredJoints ? (int)skeletonData.eSkeletonPositionTrackingState[j] == stateTracked :
-							(Array.BinarySearch(mustBeTrackedJoints, j) >= 0 ? (int)skeletonData.eSkeletonPositionTrackingState[j] == stateTracked :
-							(int)skeletonData.eSkeletonPositionTrackingState[j] != stateNotTracked);
-						player2JointsTracked[j] = player2PrevTracked[j] && playerTracked;
-						player2PrevTracked[j] = playerTracked;
-						
-						if(player2JointsTracked[j])
-						{
-							player2JointsPos[j] = kinectToWorld.MultiplyPoint3x4(skeletonData.SkeletonPositions[j]);
-						}
-					}
-					
-					// ì§ˆê° ìœ„ì— ê³¨ê²©ì„ ê·¸ë¦½ë‹ˆë‹¤
-					if(DisplaySkeletonLines && ComputeUserMap)
-					{
-						DrawSkeleton(usersLblTex, ref skeletonData, ref player2JointsTracked);
-						usersLblTex.Apply();
-					}
-					
-					// ê´€ì ˆ ë°©í–¥ì„ ê³„ì‚°í•©ë‹ˆë‹¤
-					KinectWrapper.GetSkeletonJointOrientation(ref player2JointsPos, ref player2JointsTracked, ref player2JointsOri);
-					
-					// í•„í„° ë°©í–¥ ì œì•½ ì¡°ê±´
-					if(UseBoneOrientationsConstraint && boneConstraintsFilter != null)
-					{
-						boneConstraintsFilter.Constrain(ref player2JointsOri, ref player2JointsTracked);
-					}
-					
-                    // ê³µë™ ë°©í–¥ì„ í•„í„°ë§í•˜ì‹­ì‹œì˜¤.
-                    // ëª¨ë“  ê³µë™ ìœ„ì¹˜ ìˆ˜ì • í›„ì— ìˆ˜í–‰í•´ì•¼í•©ë‹ˆë‹¤.
-	                if(UseBoneOrientationsFilter && boneOrientationFilter[1] != null)
-	                {
-	                    boneOrientationFilter[1].UpdateFilter(ref skeletonData, ref player2JointsOri);
-	                }
-	
-					// í”Œë ˆì´ì–´ ë¡œí…Œì´ì…˜ì„ ë°›ìœ¼ì‹­ì‹œì˜¤
-					player2Ori = player2JointsOri[(int)KinectWrapper.NuiSkeletonPositionIndex.HipCenter];
-					
-					// ì œìŠ¤ì²˜ë¥¼ í™•ì¸í•˜ì‹­ì‹œì˜¤
-					if(Time.realtimeSinceStartup >= gestureTrackingAtTime[1])
-					{
-						int listGestureSize = player2Gestures.Count;
-						float timestampNow = Time.realtimeSinceStartup;
-						
-						for(int g = 0; g < listGestureSize; g++)
-						{
-							KinectGestures.GestureData gestureData = player2Gestures[g];
-							
-							if((timestampNow >= gestureData.startTrackingAtTime) &&
-								!IsConflictingGestureInProgress(gestureData))
-							{
-								KinectGestures.CheckForGesture(userId, ref gestureData, Time.realtimeSinceStartup, 
-									ref player2JointsPos, ref player2JointsTracked);
-								player2Gestures[g] = gestureData;
+                                if ((skeletonDataOther.eTrackingState == KinectWrapper.NuiSkeletonTrackingState.SkeletonTracked) &&
+                                    (Mathf.Abs(kinectToWorld.MultiplyPoint3x4(skeletonDataOther.Position).z) < Mathf.Abs(skeletonPos.z)))
+                                {
+                                    bClosestUser = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
 
-								if(gestureData.complete)
-								{
-									gestureTrackingAtTime[1] = timestampNow + MinTimeBetweenGestures;
-								}
-							}
-						}
-					}
-				}
-				
-				lostUsers.Remove(userId);
-			}
-		}
-		
-		// NUI íƒ€ì´ë¨¸ë¥¼ ì—…ë°ì´íŠ¸í•˜ì‹­ì‹œì˜¤
-		lastNuiTime = currentNuiTime;
-		
-		// ìƒì–´ë²„ë¦° ì‚¬ìš©ìë¥¼ ì œê±°í•˜ì‹­ì‹œì˜¤
-		if(lostUsers.Count > 0)
-		{
-			foreach(uint userId in lostUsers)
-			{
-				RemoveUser(userId);
-			}
-			
-			lostUsers.Clear();
-		}
-	}
-	
-	// ì£¼ì–´ì§„ ì§ˆê°ìœ¼ë¡œ ê³¨ê²©ì„ ê·¸ë¦½ë‹ˆë‹¤
-	private void DrawSkeleton(Texture2D aTexture, ref KinectWrapper.NuiSkeletonData skeletonData, ref bool[] playerJointsTracked)
-	{
-		int jointsCount = (int)KinectWrapper.NuiSkeletonPositionIndex.Count;
-		
-		for(int i = 0; i < jointsCount; i++)
-		{
-			int parent = KinectWrapper.GetSkeletonJointParent(i);
-			
-			if(playerJointsTracked[i] && playerJointsTracked[parent])
-			{
-				Vector3 posParent = KinectWrapper.MapSkeletonPointToDepthPoint(skeletonData.SkeletonPositions[parent]);
-				Vector3 posJoint = KinectWrapper.MapSkeletonPointToDepthPoint(skeletonData.SkeletonPositions[i]);
-				
-				DrawLine(aTexture, (int)posParent.x, (int)posParent.y, (int)posJoint.x, (int)posJoint.y, Color.yellow);
-			}
-		}
-	}
-	
-	// ì§ˆê°ìœ¼ë¡œ ì„ ì„ ê·¸ë¦½ë‹ˆë‹¤
-	private void DrawLine(Texture2D a_Texture, int x1, int y1, int x2, int y2, Color a_Color)
-	{
-		int width = a_Texture.width;  // KinectWrapper.Constants.DepthImageWidth;
-		int height = a_Texture.height;  // KinectWrapper.Constants.DepthImageHeight;
-		
-		int dy = y2 - y1;
-		int dx = x2 - x1;
-	 
-		int stepy = 1;
-		if (dy < 0) 
-		{
-			dy = -dy; 
-			stepy = -1;
-		}
-		
-		int stepx = 1;
-		if (dx < 0) 
-		{
-			dx = -dx; 
-			stepx = -1;
-		}
-		
-		dy <<= 1;
-		dx <<= 1;
-	 
-		if(x1 >= 0 && x1 < width && y1 >= 0 && y1 < height)
-			for(int x = -1; x <= 1; x++)
-				for(int y = -1; y <= 1; y++)
-					a_Texture.SetPixel(x1 + x, y1 + y, a_Color);
-		
-		if (dx > dy) 
-		{
-			int fraction = dy - (dx >> 1);
-			
-			while (x1 != x2) 
-			{
-				if (fraction >= 0) 
-				{
-					y1 += stepy;
-					fraction -= dx;
-				}
-				
-				x1 += stepx;
-				fraction += dy;
-				
-				if(x1 >= 0 && x1 < width && y1 >= 0 && y1 < height)
-					for(int x = -1; x <= 1; x++)
-						for(int y = -1; y <= 1; y++)
-							a_Texture.SetPixel(x1 + x, y1 + y, a_Color);
-			}
-		}
-		else 
-		{
-			int fraction = dx - (dy >> 1);
-			
-			while (y1 != y2) 
-			{
-				if (fraction >= 0) 
-				{
-					x1 += stepx;
-					fraction -= dy;
-				}
-				
-				y1 += stepy;
-				fraction += dx;
-				
-				if(x1 >= 0 && x1 < width && y1 >= 0 && y1 < height)
-					for(int x = -1; x <= 1; x++)
-						for(int y = -1; y <= 1; y++)
-							a_Texture.SetPixel(x1 + x, y1 + y, a_Color);
-			}
-		}
-		
-	}
-	
-	// ë§¤íŠ¸ë¦­ìŠ¤ë¥¼ ê±°ìš¸ì„ ëŒë³´ê³  ì¿¼í„°ë‹ˆì˜¨ìœ¼ë¡œ ë³€í™˜í•˜ì‹­ì‹œì˜¤.
-	private Quaternion ConvertMatrixToQuat(Matrix4x4 mOrient, int joint, bool flip)
-	{
-		Vector4 vZ = mOrient.GetColumn(2);
-		Vector4 vY = mOrient.GetColumn(1);
+                    if (bClosestUser)
+                    {
+                        CalibrateUser(userId, i + 1, ref skeletonData);
+                    }
+                }
 
-		if(!flip)
-		{
-			vZ.y = -vZ.y;
-			vY.x = -vY.x;
-			vY.z = -vY.z;
-		}
-		else
-		{
-			vZ.x = -vZ.x;
-			vZ.y = -vZ.y;
-			vY.z = -vY.z;
-		}
-		
-		if(vZ.x != 0.0f || vZ.y != 0.0f || vZ.z != 0.0f)
-			return Quaternion.LookRotation(vZ, vY);
-		else
-			return Quaternion.identity;
-	}
-	
-	// ëª©ë¡ì—ì„œ ì œìŠ¤ì²˜ ìƒ‰ì¸ì„ ë°˜í™˜í•˜ê±°ë‚˜ ì°¾ì„ ìˆ˜ì—†ëŠ” ê²½ìš° -1
-	private int GetGestureIndex(uint UserId, KinectGestures.Gestures gesture)
-	{
-		if(UserId == Player1ID)
-		{
-			int listSize = player1Gestures.Count;
-			for(int i = 0; i < listSize; i++)
-			{
-				if(player1Gestures[i].gesture == gesture)
-					return i;
-			}
-		}
-		else if(UserId == Player2ID)
-		{
-			int listSize = player2Gestures.Count;
-			for(int i = 0; i < listSize; i++)
-			{
-				if(player2Gestures[i].gesture == gesture)
-					return i;
-			}
-		}
-		
-		return -1;
-	}
-	
-	private bool IsConflictingGestureInProgress(KinectGestures.GestureData gestureData)
-	{
-		foreach(KinectGestures.Gestures gesture in gestureData.checkForGestures)
-		{
-			int index = GetGestureIndex(gestureData.userId, gesture);
-			
-			if(index >= 0)
-			{
-				if(gestureData.userId == Player1ID)
-				{
-					if(player1Gestures[index].progress > 0f)
-						return true;
-				}
-				else if(gestureData.userId == Player2ID)
-				{
-					if(player2Gestures[index].progress > 0f)
-						return true;
-				}
-			}
-		}
-		
-		return false;
-	}
-	
-	// ì£¼ì–´ì§„ ì‚¬ìš©ìì— ëŒ€í•´ êµì • ìì„¸ê°€ ì™„ë£Œë˜ì—ˆëŠ”ì§€ í™•ì¸í•˜ì‹­ì‹œì˜¤.
-	private bool CheckForCalibrationPose(uint userId, ref KinectGestures.Gestures calibrationGesture, 
-		ref KinectGestures.GestureData gestureData, ref KinectWrapper.NuiSkeletonData skeletonData)
-	{
-		if(calibrationGesture == KinectGestures.Gestures.None)
-			return true;
-		
-		// í•„ìš”í•œ ê²½ìš° ì œìŠ¤ì²˜ ë°ì´í„°ë¥¼ ì‹œì‘í•˜ì‹­ì‹œì˜¤
-		if(gestureData.userId != userId)
-		{
-			gestureData.userId = userId;
-			gestureData.gesture = calibrationGesture;
-			gestureData.state = 0;
-			gestureData.joint = 0;
-			gestureData.progress = 0f;
-			gestureData.complete = false;
-			gestureData.cancelled = false;
-		}
-		
-		// ì„ì‹œ ê´€ì ˆì˜ ìœ„ì¹˜ë¥¼ ì–»ìœ¼ì‹­ì‹œì˜¤
-		int skeletonJointsCount = (int)KinectWrapper.NuiSkeletonPositionIndex.Count;
-		bool[] jointsTracked = new bool[skeletonJointsCount];
-		Vector3[] jointsPos = new Vector3[skeletonJointsCount];
+                // ÇÃ·¹ÀÌ¾î 1ÀÇ µ¥ÀÌÅÍ Ã³¸®
+                if (userId == Player1ID && Mathf.Abs(skeletonPos.z) >= MinUserDistance &&
+                   (MaxUserDistance <= 0f || Mathf.Abs(skeletonPos.z) <= MaxUserDistance))
+                {
+                    player1Index = i;
 
-		int stateTracked = (int)KinectWrapper.NuiSkeletonPositionTrackingState.Tracked;
-		int stateNotTracked = (int)KinectWrapper.NuiSkeletonPositionTrackingState.NotTracked;
-		
-		int [] mustBeTrackedJoints = { 
-			(int)KinectWrapper.NuiSkeletonPositionIndex.AnkleLeft,
-			(int)KinectWrapper.NuiSkeletonPositionIndex.FootLeft,
-			(int)KinectWrapper.NuiSkeletonPositionIndex.AnkleRight,
-			(int)KinectWrapper.NuiSkeletonPositionIndex.FootRight,
-		};
-		
-		for (int j = 0; j < skeletonJointsCount; j++)
-		{
-			jointsTracked[j] = Array.BinarySearch(mustBeTrackedJoints, j) >= 0 ? (int)skeletonData.eSkeletonPositionTrackingState[j] == stateTracked :
-				(int)skeletonData.eSkeletonPositionTrackingState[j] != stateNotTracked;
-			
-			if(jointsTracked[j])
-			{
-				jointsPos[j] = kinectToWorld.MultiplyPoint3x4(skeletonData.SkeletonPositions[j]);
-			}
-		}
-		
-		// ì œìŠ¤ì²˜ progessë¥¼ ì¶”ì •í•˜ì‹­ì‹œì˜¤
-		KinectGestures.CheckForGesture(userId, ref gestureData, Time.realtimeSinceStartup, 
-			ref jointsPos, ref jointsTracked);
-		
-		// ì œìŠ¤ì²˜ê°€ ì™„ë£Œë˜ì—ˆëŠ”ì§€ í™•ì¸í•˜ì‹­ì‹œì˜¤
-		if(gestureData.complete)
-		{
-			gestureData.userId = 0;
-			return true;
-		}
-		
-		return false;
-	}
-	
+                    // ÇÃ·¹ÀÌ¾î À§Ä¡ °¡Á®¿À±â
+                    player1Pos = skeletonPos;
+
+                    // Æ®·¡Å· »óÅÂ ÇÊÅÍ Àû¿ë
+                    trackingStateFilter[0].UpdateFilter(ref skeletonData);
+
+                    // ¾Æ¹ÙÅ¸ ¿Ü°ü Çâ»óÀ» À§ÇÑ ½ºÄÌ·¹Åæ ¼öÁ¤
+                    if (UseClippedLegsFilter && clippedLegsFilter[0] != null)
+                    {
+                        clippedLegsFilter[0].FilterSkeleton(ref skeletonData, deltaNuiTime);
+                    }
+
+                    if (UseSelfIntersectionConstraint && selfIntersectionConstraint != null)
+                    {
+                        selfIntersectionConstraint.Constrain(ref skeletonData);
+                    }
+
+                    // °üÀıÀÇ À§Ä¡¿Í È¸Àü °¡Á®¿À±â
+                    for (int j = 0; j < (int)KinectWrapper.NuiSkeletonPositionIndex.Count; j++)
+                    {
+                        bool playerTracked = IgnoreInferredJoints ? (int)skeletonData.eSkeletonPositionTrackingState[j] == stateTracked :
+                            (Array.BinarySearch(mustBeTrackedJoints, j) >= 0 ? (int)skeletonData.eSkeletonPositionTrackingState[j] == stateTracked :
+                            (int)skeletonData.eSkeletonPositionTrackingState[j] != stateNotTracked);
+                        player1JointsTracked[j] = player1PrevTracked[j] && playerTracked;
+                        player1PrevTracked[j] = playerTracked;
+
+                        if (player1JointsTracked[j])
+                        {
+                            player1JointsPos[j] = kinectToWorld.MultiplyPoint3x4(skeletonData.SkeletonPositions[j]);
+                        }
+
+                    }
+
+                    // ÅØ½ºÃ³ À§¿¡ ½ºÄÌ·¹Åæ ±×¸®±â
+                    if (DisplaySkeletonLines && ComputeUserMap)
+                    {
+                        DrawSkeleton(usersLblTex, ref skeletonData, ref player1JointsTracked);
+                        usersLblTex.Apply();
+                    }
+
+                    // °üÀıÀÇ ¹æÇâ °è»ê
+                    KinectWrapper.GetSkeletonJointOrientation(ref player1JointsPos, ref player1JointsTracked, ref player1JointsOri);
+
+                    // ¹æÇâ Á¦¾à ÇÊÅÍ
+                    if (UseBoneOrientationsConstraint && boneConstraintsFilter != null)
+                    {
+                        boneConstraintsFilter.Constrain(ref player1JointsOri, ref player1JointsTracked);
+                    }
+
+                    // °üÀı ¹æÇâ ÇÊÅÍ
+                    if (UseBoneOrientationsFilter && boneOrientationFilter[0] != null)
+                    {
+                        boneOrientationFilter[0].UpdateFilter(ref skeletonData, ref player1JointsOri);
+                    }
+
+                    // ÇÃ·¹ÀÌ¾î È¸Àü °¡Á®¿À±â
+                    player1Ori = player1JointsOri[(int)KinectWrapper.NuiSkeletonPositionIndex.HipCenter];
+
+                    // Á¦½ºÃ³ È®ÀÎ
+                    if (Time.realtimeSinceStartup >= gestureTrackingAtTime[0])
+                    {
+                        int listGestureSize = player1Gestures.Count;
+                        float timestampNow = Time.realtimeSinceStartup;
+                        string sDebugGestures = string.Empty;  // "ÃßÀûµÈ Á¦½ºÃ³:\n";
+
+                        for (int g = 0; g < listGestureSize; g++)
+                        {
+                            KinectGestures.GestureData gestureData = player1Gestures[g];
+
+                            if ((timestampNow >= gestureData.startTrackingAtTime) &&
+                                !IsConflictingGestureInProgress(gestureData))
+                            {
+                                KinectGestures.CheckForGesture(userId, ref gestureData, Time.realtimeSinceStartup,
+                                                               ref player1JointsPos, ref player1JointsTracked);
+                                player1Gestures[g] = gestureData;
+
+                                if (gestureData.complete)
+                                {
+                                    gestureTrackingAtTime[0] = timestampNow + MinTimeBetweenGestures;
+                                }
+
+                                {
+                                    sDebugGestures += string.Format("{0} - »óÅÂ: {1}, ½Ã°£: {2:F1}, ÁøÇà·ü: {3}%\n",
+                                                                    gestureData.gesture, gestureData.state,
+                                                                    gestureData.timestamp,
+                                                                    (int)(gestureData.progress * 100 + 0.5f));
+                                }
+                            }
+                        }
+
+                        if (GesturesDebugText)
+                        {
+                            sDebugGestures += string.Format("\n ¿ŞÂÊ ¼Õ: {0}", player1JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.HandLeft] ?
+                                                                player1JointsPos[(int)KinectWrapper.NuiSkeletonPositionIndex.HandLeft].ToString() : "");
+                            sDebugGestures += string.Format("\n ¿À¸¥ÂÊ ¼Õ: {0}", player1JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.HandRight] ?
+                                                                player1JointsPos[(int)KinectWrapper.NuiSkeletonPositionIndex.HandRight].ToString() : "");
+                            sDebugGestures += string.Format("\n ¿ŞÂÊ ÆÈ²ŞÄ¡: {0}", player1JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.ElbowLeft] ?
+                                                                player1JointsPos[(int)KinectWrapper.NuiSkeletonPositionIndex.ElbowLeft].ToString() : "");
+                            sDebugGestures += string.Format("\n ¿À¸¥ÂÊ ÆÈ²ŞÄ¡: {0}", player1JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.ElbowRight] ?
+                                                                player1JointsPos[(int)KinectWrapper.NuiSkeletonPositionIndex.ElbowRight].ToString() : "");
+
+                            sDebugGestures += string.Format("\n ¿ŞÂÊ ¾î±ú: {0}", player1JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.ShoulderLeft] ?
+                                                                player1JointsPos[(int)KinectWrapper.NuiSkeletonPositionIndex.ShoulderLeft].ToString() : "");
+                            sDebugGestures += string.Format("\n ¿À¸¥ÂÊ ¾î±ú: {0}", player1JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.ShoulderRight] ?
+                                                                player1JointsPos[(int)KinectWrapper.NuiSkeletonPositionIndex.ShoulderRight].ToString() : "");
+
+                            sDebugGestures += string.Format("\n ¸ñ: {0}", player1JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.ShoulderCenter] ?
+                                                                player1JointsPos[(int)KinectWrapper.NuiSkeletonPositionIndex.ShoulderCenter].ToString() : "");
+                            sDebugGestures += string.Format("\n ¾ûµ¢ÀÌ: {0}", player1JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.HipCenter] ?
+                                                                player1JointsPos[(int)KinectWrapper.NuiSkeletonPositionIndex.HipCenter].ToString() : "");
+                            sDebugGestures += string.Format("\n ¿ŞÂÊ ¾ûµ¢ÀÌ: {0}", player1JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.HipLeft] ?
+                                                                player1JointsPos[(int)KinectWrapper.NuiSkeletonPositionIndex.HipLeft].ToString() : "");
+                            sDebugGestures += string.Format("\n ¿À¸¥ÂÊ ¾ûµ¢ÀÌ: {0}", player1JointsTracked[(int)KinectWrapper.NuiSkeletonPositionIndex.HipRight] ?
+                                                                player1JointsPos[(int)KinectWrapper.NuiSkeletonPositionIndex.HipRight].ToString() : "");
+
+                            GesturesDebugText.GetComponent<GUIText>().text = sDebugGestures;
+                        }
+                    }
+                }
+                // ÇÃ·¹ÀÌ¾î 2 µ¥ÀÌÅÍ Ã³¸®
+                else if (userId == Player2ID && Mathf.Abs(skeletonPos.z) >= MinUserDistance &&
+                        (MaxUserDistance <= 0f || Mathf.Abs(skeletonPos.z) <= MaxUserDistance))
+                {
+                    player2Index = i;
+
+                    // ÇÃ·¹ÀÌ¾î À§Ä¡ °¡Á®¿À±â
+                    player2Pos = skeletonPos;
+
+                    // Æ®·¡Å· »óÅÂ ÇÊÅÍ Àû¿ë
+                    trackingStateFilter[1].UpdateFilter(ref skeletonData);
+
+                    // ¾Æ¹ÙÅ¸ ¿Ü°ü Çâ»óÀ» À§ÇÑ ½ºÄÌ·¹Åæ ¼öÁ¤
+                    if (UseClippedLegsFilter && clippedLegsFilter[1] != null)
+                    {
+                        clippedLegsFilter[1].FilterSkeleton(ref skeletonData, deltaNuiTime);
+                    }
+
+                    if (UseSelfIntersectionConstraint && selfIntersectionConstraint != null)
+                    {
+                        selfIntersectionConstraint.Constrain(ref skeletonData);
+                    }
+
+                    // °üÀıÀÇ À§Ä¡¿Í È¸Àü °¡Á®¿À±â
+                    for (int j = 0; j < (int)KinectWrapper.NuiSkeletonPositionIndex.Count; j++)
+                    {
+                        bool playerTracked = IgnoreInferredJoints ? (int)skeletonData.eSkeletonPositionTrackingState[j] == stateTracked :
+                            (Array.BinarySearch(mustBeTrackedJoints, j) >= 0 ? (int)skeletonData.eSkeletonPositionTrackingState[j] == stateTracked :
+                            (int)skeletonData.eSkeletonPositionTrackingState[j] != stateNotTracked);
+                        player2JointsTracked[j] = player2PrevTracked[j] && playerTracked;
+                        player2PrevTracked[j] = playerTracked;
+
+                        if (player2JointsTracked[j])
+                        {
+                            player2JointsPos[j] = kinectToWorld.MultiplyPoint3x4(skeletonData.SkeletonPositions[j]);
+                        }
+                    }
+
+                    // ÅØ½ºÃ³ À§¿¡ ½ºÄÌ·¹Åæ ±×¸®±â
+                    if (DisplaySkeletonLines && ComputeUserMap)
+                    {
+                        DrawSkeleton(usersLblTex, ref skeletonData, ref player2JointsTracked);
+                        usersLblTex.Apply();
+                    }
+
+                    // °üÀıÀÇ ¹æÇâ °è»ê
+                    KinectWrapper.GetSkeletonJointOrientation(ref player2JointsPos, ref player2JointsTracked, ref player2JointsOri);
+
+                    // ¹æÇâ Á¦¾à ÇÊÅÍ
+                    if (UseBoneOrientationsConstraint && boneConstraintsFilter != null)
+                    {
+                        boneConstraintsFilter.Constrain(ref player2JointsOri, ref player2JointsTracked);
+                    }
+
+                    // °üÀı ¹æÇâ ÇÊÅÍ
+                    if (UseBoneOrientationsFilter && boneOrientationFilter[1] != null)
+                    {
+                        boneOrientationFilter[1].UpdateFilter(ref skeletonData, ref player2JointsOri);
+                    }
+
+                    // ÇÃ·¹ÀÌ¾î È¸Àü °¡Á®¿À±â
+                    player2Ori = player2JointsOri[(int)KinectWrapper.NuiSkeletonPositionIndex.HipCenter];
+
+                    // Á¦½ºÃ³ È®ÀÎ
+                    if (Time.realtimeSinceStartup >= gestureTrackingAtTime[1])
+                    {
+                        int listGestureSize = player2Gestures.Count;
+                        float timestampNow = Time.realtimeSinceStartup;
+
+                        for (int g = 0; g < listGestureSize; g++)
+                        {
+                            KinectGestures.GestureData gestureData = player2Gestures[g];
+
+                            if ((timestampNow >= gestureData.startTrackingAtTime) &&
+                                !IsConflictingGestureInProgress(gestureData))
+                            {
+                                KinectGestures.CheckForGesture(userId, ref gestureData, Time.realtimeSinceStartup,
+                                                               ref player2JointsPos, ref player2JointsTracked);
+                                player2Gestures[g] = gestureData;
+                            }
+                        }
+                    }
+                }
+
+                // ÀÒ¾î¹ö¸° »ç¿ëÀÚ Á¦°Å
+                lostUsers.Remove(userId);
+            }
+        }
+
+        // NUI Å¸ÀÌ¸Ó ¾÷µ¥ÀÌÆ®
+        lastNuiTime = currentNuiTime;
+
+        // ÀÒ¾î¹ö¸° »ç¿ëÀÚ Á¦°Å
+        if (lostUsers.Count > 0)
+        {
+            foreach (uint userId in lostUsers)
+            {
+                RemoveUser(userId);
+            }
+
+            lostUsers.Clear();
+        }
+    }
+
+    // ÅØ½ºÃ³¿¡ ½ºÄÌ·¹Åæ ±×¸®±â
+    private void DrawSkeleton(Texture2D aTexture, ref KinectWrapper.NuiSkeletonData skeletonData, ref bool[] playerJointsTracked)
+    {
+        int jointsCount = (int)KinectWrapper.NuiSkeletonPositionIndex.Count;
+
+        for (int i = 0; i < jointsCount; i++)
+        {
+            int parent = KinectWrapper.GetSkeletonJointParent(i);
+
+            if (playerJointsTracked[i] && playerJointsTracked[parent])
+            {
+                Vector3 posParent = KinectWrapper.MapSkeletonPointToDepthPoint(skeletonData.SkeletonPositions[parent]);
+                Vector3 posJoint = KinectWrapper.MapSkeletonPointToDepthPoint(skeletonData.SkeletonPositions[i]);
+
+                DrawLine(aTexture, (int)posParent.x, (int)posParent.y, (int)posJoint.x, (int)posJoint.y, Color.yellow);
+            }
+        }
+    }
+
+    // x1, y1°ú x2, y2¸¦ ¿¬°áÇÏ´Â ¼±À» ÅØ½ºÃ³¿¡ ±×¸³´Ï´Ù.
+    private void DrawLine(Texture2D a_Texture, int x1, int y1, int x2, int y2, Color a_Color)
+    {
+        int width = a_Texture.width;  // ÅØ½ºÃ³ÀÇ ³Êºñ
+        int height = a_Texture.height; // ÅØ½ºÃ³ÀÇ ³ôÀÌ
+
+        int dy = y2 - y1; // y ¹æÇâÀÇ º¯È­
+        int dx = x2 - x1; // x ¹æÇâÀÇ º¯È­
+
+        int stepy = 1;
+        if (dy < 0)
+        {
+            dy = -dy;
+            stepy = -1; // y ¹æÇâÀÌ °¨¼ÒÇÏ´Â °æ¿ì
+        }
+
+        int stepx = 1;
+        if (dx < 0)
+        {
+            dx = -dx;
+            stepx = -1; // x ¹æÇâÀÌ °¨¼ÒÇÏ´Â °æ¿ì
+        }
+
+        dy <<= 1; // dy¸¦ µÎ ¹è·Î Áõ°¡
+        dx <<= 1; // dx¸¦ µÎ ¹è·Î Áõ°¡
+
+        // ½ÃÀÛ Á¡(x1, y1)¿¡¼­ ÇÈ¼¿ »ö»ó ¼³Á¤
+        if (x1 >= 0 && x1 < width && y1 >= 0 && y1 < height)
+            for (int x = -1; x <= 1; x++)
+                for (int y = -1; y <= 1; y++)
+                    a_Texture.SetPixel(x1 + x, y1 + y, a_Color);
+
+        // ¼± ±×¸®±â ¾Ë°í¸®Áò
+        if (dx > dy)
+        {
+            int fraction = dy - (dx >> 1);
+
+            while (x1 != x2)
+            {
+                if (fraction >= 0)
+                {
+                    y1 += stepy; // y¸¦ Áõ°¡
+                    fraction -= dx; // fraction ¾÷µ¥ÀÌÆ®
+                }
+
+                x1 += stepx; // x¸¦ Áõ°¡
+                fraction += dy; // fraction ¾÷µ¥ÀÌÆ®
+
+                // ÇöÀç ÇÈ¼¿ÀÌ ÅØ½ºÃ³ ¿µ¿ª ³»¿¡ ÀÖ´ÂÁö È®ÀÎÇÏ°í »ö»ó ¼³Á¤
+                if (x1 >= 0 && x1 < width && y1 >= 0 && y1 < height)
+                    for (int x = -1; x <= 1; x++)
+                        for (int y = -1; y <= 1; y++)
+                            a_Texture.SetPixel(x1 + x, y1 + y, a_Color);
+            }
+        }
+        else
+        {
+            int fraction = dx - (dy >> 1);
+
+            while (y1 != y2)
+            {
+                if (fraction >= 0)
+                {
+                    x1 += stepx; // x¸¦ Áõ°¡
+                    fraction -= dy; // fraction ¾÷µ¥ÀÌÆ®
+                }
+
+                y1 += stepy; // y¸¦ Áõ°¡
+                fraction += dx; // fraction ¾÷µ¥ÀÌÆ®
+
+                // ÇöÀç ÇÈ¼¿ÀÌ ÅØ½ºÃ³ ¿µ¿ª ³»¿¡ ÀÖ´ÂÁö È®ÀÎÇÏ°í »ö»ó ¼³Á¤
+                if (x1 >= 0 && x1 < width && y1 >= 0 && y1 < height)
+                    for (int x = -1; x <= 1; x++)
+                        for (int y = -1; y <= 1; y++)
+                            a_Texture.SetPixel(x1 + x, y1 + y, a_Color);
+            }
+        }
+    }
+
+    // Çà·ÄÀ» ÄõÅÍ´Ï¾ğÀ¸·Î º¯È¯, ¹Ì·¯¸µÀ» °í·Á
+    private Quaternion ConvertMatrixToQuat(Matrix4x4 mOrient, int joint, bool flip)
+    {
+        Vector4 vZ = mOrient.GetColumn(2); // Z Ãà
+        Vector4 vY = mOrient.GetColumn(1); // Y Ãà
+
+        // flip ¿©ºÎ¿¡ µû¶ó ¹æÇâ Á¶Á¤
+        if (!flip)
+        {
+            vZ.y = -vZ.y; // Y Ãà ¹İÀü
+            vY.x = -vY.x; // X Ãà ¹İÀü
+            vY.z = -vY.z; // Z Ãà ¹İÀü
+        }
+        else
+        {
+            vZ.x = -vZ.x; // X Ãà ¹İÀü
+            vZ.y = -vZ.y; // Y Ãà ¹İÀü
+            vY.z = -vY.z; // Z Ãà ¹İÀü
+        }
+
+        // Z ¹× Y º¤ÅÍ°¡ À¯È¿ÇÑ °æ¿ì ÄõÅÍ´Ï¾ğ ¹İÈ¯
+        if (vZ.x != 0.0f || vZ.y != 0.0f || vZ.z != 0.0f)
+            return Quaternion.LookRotation(vZ, vY);
+        else
+            return Quaternion.identity; // À¯È¿ÇÑ º¤ÅÍ°¡ ¾ø´Â °æ¿ì ±âº» ÄõÅÍ´Ï¾ğ ¹İÈ¯
+    }
+
+    // Á¦½ºÃ³ ¸®½ºÆ®¿¡¼­ Á¦½ºÃ³ÀÇ ÀÎµ¦½º¸¦ ¹İÈ¯, Ã£Áö ¸øÇÏ¸é -1 ¹İÈ¯
+    private int GetGestureIndex(uint UserId, KinectGestures.Gestures gesture)
+    {
+        if (UserId == Player1ID)
+        {
+            int listSize = player1Gestures.Count;
+            for (int i = 0; i < listSize; i++)
+            {
+                if (player1Gestures[i].gesture == gesture)
+                    return i; // ÀÎµ¦½º ¹İÈ¯
+            }
+        }
+        else if (UserId == Player2ID)
+        {
+            int listSize = player2Gestures.Count;
+            for (int i = 0; i < listSize; i++)
+            {
+                if (player2Gestures[i].gesture == gesture)
+                    return i; // ÀÎµ¦½º ¹İÈ¯
+            }
+        }
+
+        return -1; // Á¦½ºÃ³¸¦ Ã£Áö ¸øÇÑ °æ¿ì
+    }
+
+    // ÁøÇà ÁßÀÎ Á¦½ºÃ³°¡ Ãæµ¹ÇÏ´ÂÁö È®ÀÎ
+    private bool IsConflictingGestureInProgress(KinectGestures.GestureData gestureData)
+    {
+        foreach (KinectGestures.Gestures gesture in gestureData.checkForGestures)
+        {
+            int index = GetGestureIndex(gestureData.userId, gesture);
+
+            if (index >= 0)
+            {
+                if (gestureData.userId == Player1ID)
+                {
+                    if (player1Gestures[index].progress > 0f)
+                        return true; // Ãæµ¹ ¹ß»ı
+                }
+                else if (gestureData.userId == Player2ID)
+                {
+                    if (player2Gestures[index].progress > 0f)
+                        return true; // Ãæµ¹ ¹ß»ı
+                }
+            }
+        }
+
+        return false; // Ãæµ¹ ¾È ÇÔ
+    }
+
+    // ÁÖ¾îÁø »ç¿ëÀÚ¿¡ ´ëÇÑ º¸Á¤ Æ÷Áî°¡ ¿Ï·áµÇ¾ú´ÂÁö È®ÀÎ
+    private bool CheckForCalibrationPose(uint userId, ref KinectGestures.Gestures calibrationGesture,
+        ref KinectGestures.GestureData gestureData, ref KinectWrapper.NuiSkeletonData skeletonData)
+    {
+        // º¸Á¤ Á¦½ºÃ³°¡ ¾øÀ¸¸é Ç×»ó true ¹İÈ¯
+        if (calibrationGesture == KinectGestures.Gestures.None)
+            return true;
+
+        // ÇÊ¿ä ½Ã Á¦½ºÃ³ µ¥ÀÌÅÍ ÃÊ±âÈ­
+        if (gestureData.userId != userId)
+        {
+            gestureData.userId = userId;
+            gestureData.gesture = calibrationGesture;
+            gestureData.state = 0;
+            gestureData.joint = 0;
+            gestureData.progress = 0f;
+            gestureData.complete = false;
+            gestureData.cancelled = false;
+        }
+
+        // ÀÓ½Ã °üÀı À§Ä¡ °¡Á®¿À±â
+        int skeletonJointsCount = (int)KinectWrapper.NuiSkeletonPositionIndex.Count;
+        bool[] jointsTracked = new bool[skeletonJointsCount];
+        Vector3[] jointsPos = new Vector3[skeletonJointsCount];
+
+        int stateTracked = (int)KinectWrapper.NuiSkeletonPositionTrackingState.Tracked;
+        int stateNotTracked = (int)KinectWrapper.NuiSkeletonPositionTrackingState.NotTracked;
+
+        int[] mustBeTrackedJoints = {
+        (int)KinectWrapper.NuiSkeletonPositionIndex.AnkleLeft,
+        (int)KinectWrapper.NuiSkeletonPositionIndex.FootLeft,
+        (int)KinectWrapper.NuiSkeletonPositionIndex.AnkleRight,
+        (int)KinectWrapper.NuiSkeletonPositionIndex.FootRight,
+    };
+
+        // °üÀı ÃßÀû »óÅÂ È®ÀÎ
+        for (int j = 0; j < skeletonJointsCount; j++)
+        {
+            jointsTracked[j] = Array.BinarySearch(mustBeTrackedJoints, j) >= 0 ? (int)skeletonData.eSkeletonPositionTrackingState[j] == stateTracked :
+                (int)skeletonData.eSkeletonPositionTrackingState[j] != stateNotTracked;
+
+            if (jointsTracked[j])
+            {
+                jointsPos[j] = kinectToWorld.MultiplyPoint3x4(skeletonData.SkeletonPositions[j]); // À§Ä¡ º¯È¯
+            }
+        }
+
+        // Á¦½ºÃ³ ÁøÇà·ü ÃßÁ¤
+        KinectGestures.CheckForGesture(userId, ref gestureData, Time.realtimeSinceStartup,
+            ref jointsPos, ref jointsTracked);
+
+        // Á¦½ºÃ³°¡ ¿Ï·áµÇ¾ú´ÂÁö È®ÀÎ
+        if (gestureData.complete)
+        {
+            gestureData.userId = 0; // »ç¿ëÀÚ ID ¸®¼Â
+            return true; // º¸Á¤ Æ÷Áî ¿Ï·á
+        }
+
+        return false; // º¸Á¤ Æ÷Áî ¹Ì¿Ï·á
+    }
 }
