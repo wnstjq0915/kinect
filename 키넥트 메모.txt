@@ -1,0 +1,16 @@
+mesh collider와 rigidbody는 같이 사용될 수 없음.
+
+충돌이 감지될 시에 mesh collider를 먼저 비활성화시키고
+충돌이벤트 진행
+
+테스트 해볼 것
+1. mesh collider 비활성화시 키넥트 또한 비활성화 되는지 확인
+2. 가만 냅둬도 통통튐
+2-1. Capsule collider를 비활성화하게되면
+racdoll로 인해 제대로 서있질 못함
+
+키넥트 연동이 풀리면 T자로 서있도록 변경...?
+
+
+
+고쳐야 할 점
