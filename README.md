@@ -684,3 +684,6 @@ public partial class MainWindow : Window
     }
 }
 ```
+
+## 기타 문서작성 메모
+- C#에서 함수와 변수 등을 문서화 할 때 코드에 doxy 이용하면 쉽게 논문에 나오는 정의서 추출 가능
